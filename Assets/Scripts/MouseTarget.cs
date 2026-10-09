@@ -15,12 +15,15 @@ public class MouseTarget : MonoBehaviour
     void Update()
     {   
         bool isAiming = Input.GetMouseButton(1);
-        Debug.Log("Right Click Held: " + isAiming);
-        Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
-        if(Physics.Raycast(ray, out raycastHit) && isAiming && !EquipWeapon.equip){
-            Aim.SetActive(true);
-            Aim.transform.position = raycastHit.point;
-        }else{
+        if(isAiming && !EquipWeapon.equip){
+            Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
+            if(Physics.Raycast(ray, out raycastHit)){
+                Aim.SetActive(true);
+                Aim.transform.position = raycastHit.point;
+                return;
+            }
+        }
+        if(Aim.activeSelf){
             Aim.SetActive(false);
         }
     }

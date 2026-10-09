@@ -6,7 +6,8 @@ public class EquipWeapon : MonoBehaviour
     [SerializeField] private GameObject equipped;
     [SerializeField] private GameObject unequipped;
     [SerializeField] private GameObject shootingMechanism;
-    
+    private Sword sword;
+    private ShootMecha shootingMechaComponent;
     GameObject currEquipped;
     GameObject currUnequipped;
     public static bool equip;
@@ -15,57 +16,56 @@ public class EquipWeapon : MonoBehaviour
     /// Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        currUnequipped=Instantiate(weapon,unequipped.transform);
+        currUnequipped = Instantiate(weapon, unequipped.transform);
+        currEquipped = Instantiate(weapon, equipped.transform);
+        currEquipped.SetActive(false);
+        currUnequipped.SetActive(true);
+        sword = currEquipped.GetComponentInChildren<Sword>();
+        shootingMechaComponent = shootingMechanism.GetComponent<ShootMecha>();
     }
 
-    void Equip(){
-        if(!equip){
-            Destroy(currEquipped);
-            equip=true;
-            currEquipped=Instantiate(weapon,equipped.transform);
-            Destroy(currUnequipped);
-            shootingMechanism.GetComponent<ShootMecha>().enabled=false;
-        }
-        else{
-            Destroy(currUnequipped);
-            equip=false;
-            currUnequipped=Instantiate(weapon,unequipped.transform);
-            Destroy(currEquipped);
-            shootingMechanism.GetComponent<ShootMecha>().enabled=true;
-        }
+    void Equip()
+    {
+        equip = !equip;
+
+        currEquipped.SetActive(equip);
+        currUnequipped.SetActive(!equip);
+        shootingMechaComponent.enabled = !equip;
     }
 
-    void PlaySlashAudio(){
+    void PlaySlashAudio()
+    {
         if (currEquipped != null)
         {
-            Sword swd = currEquipped.GetComponentInChildren<Sword>();
-            if (swd != null) swd.AudioSlash();
-        }
-    }
-    
-    void PlaySlashAnim(){
-        if (currEquipped != null)
-        {
-            Sword swd = currEquipped.GetComponentInChildren<Sword>();
-            if (swd != null) swd.AnimateSlash();
+            if (sword) sword.AudioSlash();
         }
     }
 
-    void EnableDamage(){
+    void PlaySlashAnim()
+    {
+        if (currEquipped != null)
+        {
+            if (sword) sword.AnimateSlash();
+        }
+    }
+
+    void EnableDamage()
+    {
         Debug.Log("damage enabled...");
         if (currEquipped != null)
         {
-            Sword swd = currEquipped.GetComponentInChildren<Sword>();
-            if (swd != null) swd.EnableDamage();
+            if (sword) sword.EnableDamage();
         }
     }
 
-    void EnableNextMove(){
+    void EnableNextMove()
+    {
         nextAttack = true;
-        Debug.Log("Next attack enabled");   
+        Debug.Log("Next attack enabled");
     }
 
-    void DisableNextMove(){
+    void DisableNextMove()
+    {
         nextAttack = false;
         Debug.Log("Next attack disabled");
     }

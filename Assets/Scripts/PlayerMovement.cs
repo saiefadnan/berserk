@@ -7,18 +7,21 @@ public class PlayerMovement : MonoBehaviour
 {
     public Camera playerCamera;
     public GameObject figure;
-    public float walkSpeed;
-    public float runSpeed;
     public float health = 100f;
     public float jumpPower = 7f;
     public float gravity = 10f;
     public float lookSpeed = 2f;
     public float lookXLimit = 30f;
     public float defaultHeight = 2f;
+    public float defaultWalkSpeed = 2.5f;
+    public float defaultRunSpeed = 5f;
     public float crouchHeight = 1f;
     public float crouchSpeed = 3f;
 
-    private float smoothTime = 0.05f;
+
+    private float walkSpeed;
+    private float runSpeed;
+    private float smoothTime = 0.08f;
     private float _currentVelocity;
     private AnimatorStateInfo stateInfo, stateInfo1;
     private Vector3 moveDirection;
@@ -38,12 +41,25 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private AudioClip footStep;
     [SerializeField] private AudioClip jumpSound;
 
+    private static readonly int Attack1Param = Animator.StringToHash("attack1");
+    private static readonly int Attack2Param = Animator.StringToHash("attack2");
+    private static readonly int Attack3Param = Animator.StringToHash("attack3");
+    private static readonly int EquipParam = Animator.StringToHash("equip");
+    private static readonly int ShootParam = Animator.StringToHash("shoot");
+    private static readonly int EqMovParam = Animator.StringToHash("eq_mov");
+    private static readonly int UneqMovParam = Animator.StringToHash("uneq_mov");
+    private static readonly int UneqFMovParam = Animator.StringToHash("uneq_fmov");
+    private static readonly int IdleParam = Animator.StringToHash("idle");
+    private static readonly int JumpParam = Animator.StringToHash("jump");
+
     void Start()
     {
         characterController = GetComponent<CharacterController>();
         animator = GetComponentInChildren<Animator>();
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+        walkSpeed = defaultWalkSpeed;
+        runSpeed = defaultRunSpeed;
     }
 
     void Update()
@@ -55,7 +71,7 @@ public class PlayerMovement : MonoBehaviour
         AnimatorStateInfo nextStateInfo = animator.IsInTransition(0) ? animator.GetNextAnimatorStateInfo(0) : default;
         Vector3 forward = transform.TransformDirection(Vector3.forward);
         Vector3 right = transform.TransformDirection(Vector3.right);
-        //Debug.Log($"Attack animation playing: {attackAnimPlaying}");
+
         bool isWalking = Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.A);
         bool isRunning = Input.GetKey(KeyCode.LeftShift) && isWalking;
         float curSpeedX = canMove ? (isRunning ? runSpeed : walkSpeed) * Input.GetAxis("Vertical") : 0;
@@ -70,15 +86,14 @@ public class PlayerMovement : MonoBehaviour
         //bool attack1 = Input.GetMouseButtonDown(0);
         bool shoot = Input.GetMouseButton(1);
 
-        animator.SetBool("shoot", shoot && !equip);
+        animator.SetBool(ShootParam, shoot && !equip);
         moveDirection = stateInfo.IsName("equip") || attackAnimPlaying ? Vector3.zero : (forward * curSpeedX) + (right * curSpeedY);
-        //Debug.Log(moveDirection); 
 
         if (moveDirection != Vector3.zero)
         {
             var targetAngle = Mathf.Atan2(moveDirection.x, moveDirection.z) * Mathf.Rad2Deg;
-            //var angle = Mathf.SmoothDamp(figure.transform.eulerAngles.y,targetAngle,ref _currentVelocity,smoothTime);
-            figure.transform.rotation = Quaternion.Euler(0.0f, targetAngle, 0.0f);
+            var angle = Mathf.SmoothDampAngle(figure.transform.eulerAngles.y, targetAngle, ref _currentVelocity, smoothTime);
+            figure.transform.rotation = Quaternion.Euler(0.0f, angle, 0.0f);
             if (!characterController.isGrounded && !attackAnimPlaying)
             {
                 StopFootStep();
@@ -115,13 +130,13 @@ public class PlayerMovement : MonoBehaviour
         if (stateInfo1.IsName("shoot"))
         {
             var targetAngle = Mathf.Atan2(transform.forward.x, transform.forward.z) * Mathf.Rad2Deg;
-            //var angle = Mathf.SmoothDamp(figure.transform.eulerAngles.y,targetAngle,ref _currentVelocity,smoothTime);
-            figure.transform.rotation = Quaternion.Euler(0.0f, targetAngle, 0.0f);
+            var angle = Mathf.SmoothDampAngle(figure.transform.eulerAngles.y, targetAngle, ref _currentVelocity, smoothTime);
+            figure.transform.rotation = Quaternion.Euler(0.0f, angle, 0.0f);
         }
         if (Input.GetKeyDown(KeyCode.E))
         {
             equip = !equip;
-            animator.SetTrigger("equip");
+            animator.SetTrigger(EquipParam);
         }
 
         if (equip)
@@ -132,17 +147,17 @@ public class PlayerMovement : MonoBehaviour
 
                 if (inAttack1)
                 {
-                    animator.SetTrigger("attack2");
+                    animator.SetTrigger(Attack2Param);
                 }
                 else if (inAttack2)
                 {
-                    animator.SetTrigger("attack3");
+                    animator.SetTrigger(Attack3Param);
                 }
                 else if (!inAttack3)
                 {
-                    animator.ResetTrigger("attack2");
-                    animator.ResetTrigger("attack3");
-                    animator.SetTrigger("attack1");
+                    animator.ResetTrigger(Attack2Param);
+                    animator.ResetTrigger(Attack3Param);
+                    animator.SetTrigger(Attack1Param);
                 }
             }
             else if (attackTimer <= 0)
@@ -152,15 +167,15 @@ public class PlayerMovement : MonoBehaviour
         }
         // animator.SetBool("Uuneq_mov",moveDirection!=Vector3.zero && isWalking && !isRunning && !equip && shoot);
         // animator.SetBool("Uuneq_fmov",moveDirection!=Vector3.zero && isRunning && !equip && shoot);
-        animator.SetBool("eq_mov", moveDirection != Vector3.zero && (isRunning || isWalking) && equip);
-        animator.SetBool("uneq_mov", moveDirection != Vector3.zero && isWalking && !isRunning && !equip);
-        animator.SetBool("uneq_fmov", moveDirection != Vector3.zero && isRunning && !equip);
-        animator.SetBool("idle", !isRunning && !isWalking);
+        animator.SetBool(EqMovParam, moveDirection != Vector3.zero && (isRunning || isWalking) && equip);
+        animator.SetBool(UneqMovParam, moveDirection != Vector3.zero && isWalking && !isRunning && !equip);
+        animator.SetBool(UneqFMovParam, moveDirection != Vector3.zero && isRunning && !equip);
+        animator.SetBool(IdleParam, !isRunning && !isWalking);
         //jumpSetup
         if (Input.GetButton("Jump") && canMove && characterController.isGrounded)
         {
             moveDirection.y = jumpPower;
-            animator.SetTrigger("jump");
+            animator.SetTrigger(JumpParam);
             PlayJumpSound();
         }
         else
@@ -182,8 +197,8 @@ public class PlayerMovement : MonoBehaviour
         else
         {
             characterController.height = defaultHeight;
-            walkSpeed = 2.5f;
-            runSpeed = 5f;
+            walkSpeed = defaultWalkSpeed;
+            runSpeed = defaultRunSpeed;
         }
 
         characterController.Move(moveDirection * Time.deltaTime);
@@ -195,7 +210,7 @@ public class PlayerMovement : MonoBehaviour
             rotationX = Mathf.Clamp(rotationX, -lookXLimit, !stateInfo1.IsName("shoot") ? lookXLimit : 25f);
             playerCamera.transform.localRotation = Quaternion.Euler(rotationX, 0, 0);
             rotationY = Input.GetAxis("Mouse X") * lookSpeed;
-            if (!stateInfo1.IsName("shoot")) figure.transform.localRotation *= Quaternion.Euler(0, -rotationY, 0);
+            if (!stateInfo1.IsName("shoot") && moveDirection == Vector3.zero) figure.transform.localRotation *= Quaternion.Euler(0, -rotationY, 0);
             transform.localRotation *= Quaternion.Euler(0, rotationY, 0);
         }
 
