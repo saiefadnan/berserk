@@ -187,14 +187,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerCamera: {fileID: 638760646}
   figure: {fileID: 190267466}
-  walkSpeed: 3.5
-  runSpeed: 7
   health: 100
   jumpPower: 7
   gravity: 10
   lookSpeed: 2
   lookXLimit: 45
   defaultHeight: 2
+  defaultWalkSpeed: 2.5
+  defaultRunSpeed: 5
   crouchHeight: 1
   crouchSpeed: 3
   footAudioSrc: {fileID: 35385142}
@@ -50123,7 +50123,11 @@ PrefabInstance:
       objectReference: {fileID: 1887701710}
     - target: {fileID: 5509588781538313690, guid: 8ce21e5215bc6d74eabac4873f810a05, type: 3}
       propertyPath: m_WarningMessage
-      value: 
+      value: "\nBinding warning: Some generic clip(s) animate transforms that are
+        already bound by a Humanoid avatar. These transforms can only be changed
+        by Humanoid clips.\n\tTransform 'mixamorig:LeftArm'\n\tTransform 'mixamorig:LeftShoulder'\n\tTransform
+        'mixamorig:LeftArm'\n\tTransform 'mixamorig:LeftShoulder'\n\tTransform 'mixamorig:LeftArm'\n\tTransform
+        'mixamorig:LeftShoulder'"
       objectReference: {fileID: 0}
     - target: {fileID: 5700267855224180591, guid: 8ce21e5215bc6d74eabac4873f810a05, type: 3}
       propertyPath: m_Positions.Array.size

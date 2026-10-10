@@ -23,6 +23,7 @@ public class PlayerMovement : MonoBehaviour
     private float runSpeed;
     private float smoothTime = 0.08f;
     private float _currentVelocity;
+    private float currentSpeed;
     private AnimatorStateInfo stateInfo, stateInfo1;
     private Vector3 moveDirection;
     private float rotationX = 0, rotationY;
@@ -47,10 +48,12 @@ public class PlayerMovement : MonoBehaviour
     private static readonly int EquipParam = Animator.StringToHash("equip");
     private static readonly int ShootParam = Animator.StringToHash("shoot");
     private static readonly int EqMovParam = Animator.StringToHash("eq_mov");
-    private static readonly int UneqMovParam = Animator.StringToHash("uneq_mov");
-    private static readonly int UneqFMovParam = Animator.StringToHash("uneq_fmov");
+    // private static readonly int UneqMovParam = Animator.StringToHash("uneq_mov");
+    // private static readonly int UneqFMovParam = Animator.StringToHash("uneq_fmov");
     private static readonly int IdleParam = Animator.StringToHash("idle");
     private static readonly int JumpParam = Animator.StringToHash("jump");
+    private static readonly int SpeedParam = Animator.StringToHash("speed");
+    private static readonly int IsEquippedParam = Animator.StringToHash("isEquipped");
 
     void Start()
     {
@@ -74,6 +77,9 @@ public class PlayerMovement : MonoBehaviour
 
         bool isWalking = Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.A);
         bool isRunning = Input.GetKey(KeyCode.LeftShift) && isWalking;
+        float targetSpeed = !canMove || !isWalking ? 0 : (isRunning ? 1.0f : 0.5f);
+        currentSpeed = Mathf.MoveTowards(currentSpeed, targetSpeed, 5f * Time.deltaTime);
+        animator.SetFloat(SpeedParam, currentSpeed);
         float curSpeedX = canMove ? (isRunning ? runSpeed : walkSpeed) * Input.GetAxis("Vertical") : 0;
         float curSpeedY = canMove ? (isRunning ? runSpeed : walkSpeed) * Input.GetAxis("Horizontal") : 0;
         float movementDirectionY = moveDirection.y;
@@ -133,10 +139,12 @@ public class PlayerMovement : MonoBehaviour
             var angle = Mathf.SmoothDampAngle(figure.transform.eulerAngles.y, targetAngle, ref _currentVelocity, smoothTime);
             figure.transform.rotation = Quaternion.Euler(0.0f, angle, 0.0f);
         }
+        
         if (Input.GetKeyDown(KeyCode.E))
         {
             equip = !equip;
             animator.SetTrigger(EquipParam);
+            animator.SetBool(IsEquippedParam, equip);
         }
 
         if (equip)
@@ -168,9 +176,9 @@ public class PlayerMovement : MonoBehaviour
         // animator.SetBool("Uuneq_mov",moveDirection!=Vector3.zero && isWalking && !isRunning && !equip && shoot);
         // animator.SetBool("Uuneq_fmov",moveDirection!=Vector3.zero && isRunning && !equip && shoot);
         animator.SetBool(EqMovParam, moveDirection != Vector3.zero && (isRunning || isWalking) && equip);
-        animator.SetBool(UneqMovParam, moveDirection != Vector3.zero && isWalking && !isRunning && !equip);
-        animator.SetBool(UneqFMovParam, moveDirection != Vector3.zero && isRunning && !equip);
-        animator.SetBool(IdleParam, !isRunning && !isWalking);
+        // animator.SetBool(UneqMovParam, moveDirection != Vector3.zero && isWalking && !isRunning && !equip);
+        // animator.SetBool(UneqFMovParam, moveDirection != Vector3.zero && isRunning && !equip);
+        // animator.SetBool(IdleParam, !isRunning && !isWalking);
         //jumpSetup
         if (Input.GetButton("Jump") && canMove && characterController.isGrounded)
         {
