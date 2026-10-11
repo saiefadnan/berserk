@@ -34,13 +34,24 @@ public class PlayerMovement : MonoBehaviour
     private bool canMove = true;
     private bool equip;
     private bool stepRunning = false;
-    private int attackIndex = 1;
-    private readonly float attackDelay = 2f;
-    private float attackTimer = 2f;
+    private float attackBufferTimer=0f;
+    private const float AttackBufferTimer = 0.3f;
     [SerializeField] private AudioSource footAudioSrc;
     [SerializeField] private AudioSource jumpAudioSrc;
     [SerializeField] private AudioClip footStep;
     [SerializeField] private AudioClip jumpSound;
+
+    [Header("Dodge Settings")]
+    [SerializeField] private KeyCode dodgeKey = KeyCode.LeftAlt;
+    [SerializeField] private float dodgeSpeed = 12f;
+    [SerializeField] private float dodgeDuration = 0.35f;
+    [SerializeField] private float dodgeCooldown = 0.5f;
+
+    private bool isDodging = false;
+    private bool isInvulnerable = false;
+    private float dodgeTimer = 0f;
+    private float dodgeCooldownTimer = 0f;
+    private Vector3 dodgeDirection;
 
     private static readonly int Attack1Param = Animator.StringToHash("attack1");
     private static readonly int Attack2Param = Animator.StringToHash("attack2");
@@ -48,8 +59,7 @@ public class PlayerMovement : MonoBehaviour
     private static readonly int EquipParam = Animator.StringToHash("equip");
     private static readonly int ShootParam = Animator.StringToHash("shoot");
     private static readonly int EqMovParam = Animator.StringToHash("eq_mov");
-    // private static readonly int UneqMovParam = Animator.StringToHash("uneq_mov");
-    // private static readonly int UneqFMovParam = Animator.StringToHash("uneq_fmov");
+    
     private static readonly int IdleParam = Animator.StringToHash("idle");
     private static readonly int JumpParam = Animator.StringToHash("jump");
     private static readonly int SpeedParam = Animator.StringToHash("speed");
@@ -67,8 +77,6 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
-        //speedSetup 
-        attackTimer -= Time.deltaTime;
         stateInfo = animator.GetCurrentAnimatorStateInfo(0);
         stateInfo1 = animator.GetCurrentAnimatorStateInfo(1);
         AnimatorStateInfo nextStateInfo = animator.IsInTransition(0) ? animator.GetNextAnimatorStateInfo(0) : default;
@@ -92,10 +100,38 @@ public class PlayerMovement : MonoBehaviour
         //bool attack1 = Input.GetMouseButtonDown(0);
         bool shoot = Input.GetMouseButton(1);
 
+        if(dodgeCooldownTimer > 0)
+        {
+            dodgeCooldownTimer -= Time.deltaTime;
+        }
+        if(isDodging){
+            dodgeTimer -= Time.deltaTime;
+            if(dodgeTimer <= 0)
+            {
+                isDodging = false;
+                isInvulnerable = false;
+            }
+        }
+
+        if(Input.GetKeyDown(dodgeKey) && !isDodging && dodgeCooldownTimer <= 0 && canMove)
+        {
+            isDodging = true;
+            isInvulnerable = true;
+            dodgeTimer = dodgeDuration;
+            dodgeCooldownTimer = dodgeCooldown;
+
+            Vector3 inputDir = (forward * Input.GetAxisRaw("Vertical") + right * Input.GetAxisRaw("Horizontal")).normalized;
+            dodgeDirection = inputDir.sqrMagnitude > 0.01f ? inputDir : transform.forward;
+
+            attackBufferTimer = 0;
+            animator.ResetTrigger(Attack1Param);
+            animator.ResetTrigger(Attack2Param);
+            animator.ResetTrigger(Attack3Param);
+        }
         animator.SetBool(ShootParam, shoot && !equip);
         moveDirection = stateInfo.IsName("equip") || attackAnimPlaying ? Vector3.zero : (forward * curSpeedX) + (right * curSpeedY);
 
-        if (moveDirection != Vector3.zero)
+        if (!isDodging && moveDirection != Vector3.zero)
         {
             var targetAngle = Mathf.Atan2(moveDirection.x, moveDirection.z) * Mathf.Rad2Deg;
             var angle = Mathf.SmoothDampAngle(figure.transform.eulerAngles.y, targetAngle, ref _currentVelocity, smoothTime);
@@ -147,40 +183,38 @@ public class PlayerMovement : MonoBehaviour
             animator.SetBool(IsEquippedParam, equip);
         }
 
-        if (equip)
-        {
-            if (attack)
-            {
-                attackTimer = attackDelay;
 
-                if (inAttack1)
-                {
-                    animator.SetTrigger(Attack2Param);
-                }
-                else if (inAttack2)
-                {
-                    animator.SetTrigger(Attack3Param);
-                }
-                else if (!inAttack3)
-                {
-                    animator.ResetTrigger(Attack2Param);
-                    animator.ResetTrigger(Attack3Param);
-                    animator.SetTrigger(Attack1Param);
-                }
-            }
-            else if (attackTimer <= 0)
+        if(attackBufferTimer > 0)
+        {
+            attackBufferTimer -= Time.deltaTime;
+        }
+        if(equip && Input.GetMouseButtonDown(0))
+        {
+            attackBufferTimer = AttackBufferTimer;
+        }
+        if (equip && attackBufferTimer > 0)
+        {
+            if (inAttack1)
             {
-                attackIndex = 1;
+                animator.SetTrigger(Attack2Param);
+                attackBufferTimer = 0;
+            }
+            else if (inAttack2)
+            {
+                animator.SetTrigger(Attack3Param);
+                attackBufferTimer = 0;
+            }
+            else if (!attackAnimPlaying)
+            {
+                animator.ResetTrigger(Attack2Param);
+                animator.ResetTrigger(Attack3Param);
+                animator.SetTrigger(Attack1Param);
+                attackBufferTimer = 0;
             }
         }
-        // animator.SetBool("Uuneq_mov",moveDirection!=Vector3.zero && isWalking && !isRunning && !equip && shoot);
-        // animator.SetBool("Uuneq_fmov",moveDirection!=Vector3.zero && isRunning && !equip && shoot);
         animator.SetBool(EqMovParam, moveDirection != Vector3.zero && (isRunning || isWalking) && equip);
-        // animator.SetBool(UneqMovParam, moveDirection != Vector3.zero && isWalking && !isRunning && !equip);
-        // animator.SetBool(UneqFMovParam, moveDirection != Vector3.zero && isRunning && !equip);
-        // animator.SetBool(IdleParam, !isRunning && !isWalking);
         //jumpSetup
-        if (Input.GetButton("Jump") && canMove && characterController.isGrounded)
+        if (Input.GetButton("Jump") && !isDodging && canMove && characterController.isGrounded)
         {
             moveDirection.y = jumpPower;
             animator.SetTrigger(JumpParam);
@@ -209,7 +243,19 @@ public class PlayerMovement : MonoBehaviour
             runSpeed = defaultRunSpeed;
         }
 
-        characterController.Move(moveDirection * Time.deltaTime);
+        if(isDodging){
+            Vector3 dodgeVelocity = dodgeSpeed * dodgeDirection;
+            dodgeVelocity.y = moveDirection.y; 
+            characterController.Move(dodgeVelocity * Time.deltaTime);
+
+            var targetAngle = Mathf.Atan2(dodgeDirection.x, dodgeDirection.z) * Mathf.Rad2Deg;
+            var angle = Mathf.SmoothDampAngle(figure.transform.eulerAngles.y, targetAngle, ref _currentVelocity, smoothTime);
+            figure.transform.rotation = Quaternion.Euler(0.0f, angle, 0.0f);
+        }
+        else{
+            characterController.Move(moveDirection * Time.deltaTime);
+        }
+        
 
         //cameraMovement
         if (canMove)
@@ -226,6 +272,10 @@ public class PlayerMovement : MonoBehaviour
 
     public void TakeDamage(int damage)
     {
+        if(isInvulnerable){
+            Debug.Log("<color=cyan>DODGED! (i-Frames protected Guts)</color>");
+            return;
+        }
         health -= damage;
     }
 
