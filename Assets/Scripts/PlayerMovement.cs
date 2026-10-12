@@ -74,7 +74,7 @@ public class PlayerMovement : MonoBehaviour
     {
         characterController = GetComponent<CharacterController>();
         animator = GetComponentInChildren<Animator>();
-        equipWeaponComponent = GetComponent<EquipWeapon>();
+        equipWeaponComponent = GetComponentInChildren<EquipWeapon>();
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
         walkSpeed = defaultWalkSpeed;
@@ -147,10 +147,49 @@ public class PlayerMovement : MonoBehaviour
         }
         isGuarding = equip && Input.GetMouseButton(1) && !isDodging && !attackAnimPlaying;
         animator.SetBool(IsGuardingParam, isGuarding);
-        if (equipWeaponComponent != null) equipWeaponComponent.SetGuarding(isGuarding);
+        if (equipWeaponComponent != null)
+        {
+            equipWeaponComponent.SetGuarding(isGuarding);
+            equipWeaponComponent.SetAttacking(attackAnimPlaying);
+        }
         animator.SetBool(ShootParam, shoot && !equip);
         moveDirection = stateInfo.IsName("equip") || attackAnimPlaying || isGuarding ? Vector3.zero : (forward * curSpeedX) + (right * curSpeedY);
 
+        if (attackAnimPlaying && !isDodging)
+        {
+            float normTime = stateInfo.normalizedTime % 1;
+            if (normTime < 0.25f)
+            {
+                var targetAngle = transform.eulerAngles.y;
+                var angle = Mathf.SmoothDampAngle(figure.transform.eulerAngles.y, targetAngle, ref _currentVelocity, smoothTime);
+                figure.transform.rotation = Quaternion.Euler(0.0f, angle, 0.0f);
+                StopFootStep();
+                stepRunning = false;
+            }
+            float lungeSpeed = 0.0f;
+            if (inAttack1 && normTime >= 0.20f && normTime < 0.45f)
+            {
+                float t = Mathf.Sin((normTime - 0.20f) / 0.25f * Mathf.PI);
+                lungeSpeed = 5.8f * t;
+            }
+            else if (inAttack2 && normTime >= 0.35f && normTime <= 0.60f)
+            {
+                float t = Mathf.Sin((normTime - 0.35f) / (0.60f - 0.35f) * Mathf.PI);
+                lungeSpeed = 4.2f * t;
+            }
+            // Hit 3: Colossal overhead slam driving forward
+            else if (inAttack3 && normTime >= 0.25f && normTime <= 0.45f)
+            {
+                float t = Mathf.Sin((normTime - 0.25f) / (0.45f - 0.25f) * Mathf.PI);
+                lungeSpeed = 5.8f * t;
+            }
+            if (lungeSpeed > 0)
+            {
+                Vector3 lungeDirection = figure.transform.forward * lungeSpeed;
+                moveDirection.x = lungeDirection.x;
+                moveDirection.z = lungeDirection.z;
+            }
+        }
         if (isGuarding)
         {
             var targetAngle = transform.eulerAngles.y;
@@ -232,6 +271,11 @@ public class PlayerMovement : MonoBehaviour
                 animator.SetTrigger(Attack3Param);
                 attackBufferTimer = 0;
             }
+            else if (inAttack3)
+            {
+                animator.SetTrigger(Attack1Param);
+                attackBufferTimer = 0;
+            }
             else if (!attackAnimPlaying)
             {
                 animator.ResetTrigger(Attack2Param);
@@ -299,7 +343,7 @@ public class PlayerMovement : MonoBehaviour
             rotationX = Mathf.Clamp(rotationX, -lookXLimit, !stateInfo1.IsName("shoot") ? lookXLimit : 25f);
             playerCamera.transform.localRotation = Quaternion.Euler(rotationX, 0, 0);
             rotationY = Input.GetAxis("Mouse X") * lookSpeed;
-            if (!stateInfo1.IsName("shoot") && moveDirection == Vector3.zero) figure.transform.localRotation *= Quaternion.Euler(0, -rotationY, 0);
+            if (!stateInfo1.IsName("shoot") && !isWalking && !isGuarding) figure.transform.localRotation *= Quaternion.Euler(0, -rotationY, 0);
             transform.localRotation *= Quaternion.Euler(0, rotationY, 0);
         }
 
