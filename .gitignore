@@ -76,3 +76,8 @@ crashlytics-build.properties
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Recovery & local screenshots
+/[Aa]ssets/_Recovery/
+Screenshot*.png
+

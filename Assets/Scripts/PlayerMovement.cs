@@ -18,7 +18,6 @@ public class PlayerMovement : MonoBehaviour
     public float crouchHeight = 1f;
     public float crouchSpeed = 3f;
 
-
     private float walkSpeed;
     private float runSpeed;
     private float smoothTime = 0.08f;
@@ -29,12 +28,13 @@ public class PlayerMovement : MonoBehaviour
     private float rotationX = 0, rotationY;
     private CharacterController characterController;
     private Animator animator;
+    private EquipWeapon equipWeaponComponent;
     private GameObject swordHolder;
     private GameObject weapon;
     private bool canMove = true;
     private bool equip;
     private bool stepRunning = false;
-    private float attackBufferTimer=0f;
+    private float attackBufferTimer = 0f;
     private const float AttackBufferTimer = 0.3f;
     [SerializeField] private AudioSource footAudioSrc;
     [SerializeField] private AudioSource jumpAudioSrc;
@@ -48,6 +48,8 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float dodgeCooldown = 0.5f;
 
     private bool isDodging = false;
+    private bool isGuarding = false;
+    private bool isBackstep = false;
     private bool isInvulnerable = false;
     private float dodgeTimer = 0f;
     private float dodgeCooldownTimer = 0f;
@@ -59,16 +61,20 @@ public class PlayerMovement : MonoBehaviour
     private static readonly int EquipParam = Animator.StringToHash("equip");
     private static readonly int ShootParam = Animator.StringToHash("shoot");
     private static readonly int EqMovParam = Animator.StringToHash("eq_mov");
-    
+
     private static readonly int IdleParam = Animator.StringToHash("idle");
     private static readonly int JumpParam = Animator.StringToHash("jump");
     private static readonly int SpeedParam = Animator.StringToHash("speed");
     private static readonly int IsEquippedParam = Animator.StringToHash("isEquipped");
+    private static readonly int DodgeParam = Animator.StringToHash("dodge");
+    private static readonly int IsGuardingParam = Animator.StringToHash("isGuarding");
+    private static readonly int GuardHitParam = Animator.StringToHash("guardHit");
 
     void Start()
     {
         characterController = GetComponent<CharacterController>();
         animator = GetComponentInChildren<Animator>();
+        equipWeaponComponent = GetComponent<EquipWeapon>();
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
         walkSpeed = defaultWalkSpeed;
@@ -97,41 +103,63 @@ public class PlayerMovement : MonoBehaviour
         bool inAttack3 = stateInfo.IsName("attack3") || (animator.IsInTransition(0) && nextStateInfo.IsName("attack3"));
         bool attackAnimPlaying = inAttack1 || inAttack2 || inAttack3;
         bool defaultState = stateInfo.IsName("idle");
-        //bool attack1 = Input.GetMouseButtonDown(0);
         bool shoot = Input.GetMouseButton(1);
 
-        if(dodgeCooldownTimer > 0)
+        if (dodgeCooldownTimer > 0)
         {
             dodgeCooldownTimer -= Time.deltaTime;
         }
-        if(isDodging){
+        if (isDodging)
+        {
             dodgeTimer -= Time.deltaTime;
-            if(dodgeTimer <= 0)
+            if (dodgeTimer <= 0)
             {
                 isDodging = false;
                 isInvulnerable = false;
             }
         }
 
-        if(Input.GetKeyDown(dodgeKey) && !isDodging && dodgeCooldownTimer <= 0 && canMove)
+        if (Input.GetKeyDown(dodgeKey) && !isDodging && dodgeCooldownTimer <= 0 && canMove)
         {
             isDodging = true;
             isInvulnerable = true;
             dodgeTimer = dodgeDuration;
             dodgeCooldownTimer = dodgeCooldown;
+            animator.SetTrigger(DodgeParam);
 
             Vector3 inputDir = (forward * Input.GetAxisRaw("Vertical") + right * Input.GetAxisRaw("Horizontal")).normalized;
-            dodgeDirection = inputDir.sqrMagnitude > 0.01f ? inputDir : transform.forward;
+
+            if (inputDir.sqrMagnitude > 0.01f)
+            {
+                dodgeDirection = inputDir;
+                isBackstep = false;
+            }
+            else
+            {
+                dodgeDirection = -transform.forward;
+                isBackstep = true;
+            }
 
             attackBufferTimer = 0;
             animator.ResetTrigger(Attack1Param);
             animator.ResetTrigger(Attack2Param);
             animator.ResetTrigger(Attack3Param);
         }
+        isGuarding = equip && Input.GetMouseButton(1) && !isDodging && !attackAnimPlaying;
+        animator.SetBool(IsGuardingParam, isGuarding);
+        if (equipWeaponComponent != null) equipWeaponComponent.SetGuarding(isGuarding);
         animator.SetBool(ShootParam, shoot && !equip);
-        moveDirection = stateInfo.IsName("equip") || attackAnimPlaying ? Vector3.zero : (forward * curSpeedX) + (right * curSpeedY);
+        moveDirection = stateInfo.IsName("equip") || attackAnimPlaying || isGuarding ? Vector3.zero : (forward * curSpeedX) + (right * curSpeedY);
 
-        if (!isDodging && moveDirection != Vector3.zero)
+        if (isGuarding)
+        {
+            var targetAngle = transform.eulerAngles.y;
+            var angle = Mathf.SmoothDampAngle(figure.transform.eulerAngles.y, targetAngle, ref _currentVelocity, smoothTime);
+            figure.transform.rotation = Quaternion.Euler(0.0f, angle, 0.0f);
+            StopFootStep();
+            stepRunning = false;
+        }
+        else if (!isDodging && moveDirection != Vector3.zero)
         {
             var targetAngle = Mathf.Atan2(moveDirection.x, moveDirection.z) * Mathf.Rad2Deg;
             var angle = Mathf.SmoothDampAngle(figure.transform.eulerAngles.y, targetAngle, ref _currentVelocity, smoothTime);
@@ -175,8 +203,8 @@ public class PlayerMovement : MonoBehaviour
             var angle = Mathf.SmoothDampAngle(figure.transform.eulerAngles.y, targetAngle, ref _currentVelocity, smoothTime);
             figure.transform.rotation = Quaternion.Euler(0.0f, angle, 0.0f);
         }
-        
-        if (Input.GetKeyDown(KeyCode.E))
+
+        if (Input.GetKeyDown(KeyCode.E) && !stateInfo.IsName("equip"))
         {
             equip = !equip;
             animator.SetTrigger(EquipParam);
@@ -184,11 +212,11 @@ public class PlayerMovement : MonoBehaviour
         }
 
 
-        if(attackBufferTimer > 0)
+        if (attackBufferTimer > 0)
         {
             attackBufferTimer -= Time.deltaTime;
         }
-        if(equip && Input.GetMouseButtonDown(0))
+        if (equip && Input.GetMouseButtonDown(0))
         {
             attackBufferTimer = AttackBufferTimer;
         }
@@ -243,19 +271,26 @@ public class PlayerMovement : MonoBehaviour
             runSpeed = defaultRunSpeed;
         }
 
-        if(isDodging){
-            Vector3 dodgeVelocity = dodgeSpeed * dodgeDirection;
-            dodgeVelocity.y = moveDirection.y; 
+        if (isDodging)
+        {
+            float speedFactor = Mathf.Clamp01(dodgeTimer / dodgeDuration);
+            float currentDodgeSpeed = (isBackstep ? dodgeSpeed * 0.7f : dodgeSpeed) * Mathf.Sqrt(speedFactor);
+            Vector3 dodgeVelocity = currentDodgeSpeed * dodgeDirection;
+            dodgeVelocity.y = moveDirection.y;
             characterController.Move(dodgeVelocity * Time.deltaTime);
 
-            var targetAngle = Mathf.Atan2(dodgeDirection.x, dodgeDirection.z) * Mathf.Rad2Deg;
-            var angle = Mathf.SmoothDampAngle(figure.transform.eulerAngles.y, targetAngle, ref _currentVelocity, smoothTime);
-            figure.transform.rotation = Quaternion.Euler(0.0f, angle, 0.0f);
+            if (!isBackstep)
+            {
+                var targetAngle = Mathf.Atan2(dodgeDirection.x, dodgeDirection.z) * Mathf.Rad2Deg;
+                var angle = Mathf.SmoothDampAngle(figure.transform.eulerAngles.y, targetAngle, ref _currentVelocity, smoothTime);
+                figure.transform.rotation = Quaternion.Euler(0.0f, angle, 0.0f);
+            }
         }
-        else{
+        else
+        {
             characterController.Move(moveDirection * Time.deltaTime);
         }
-        
+
 
         //cameraMovement
         if (canMove)
@@ -272,8 +307,16 @@ public class PlayerMovement : MonoBehaviour
 
     public void TakeDamage(int damage)
     {
-        if(isInvulnerable){
+        if (isInvulnerable)
+        {
             Debug.Log("<color=cyan>DODGED! (i-Frames protected Guts)</color>");
+            return;
+        }
+        if (isGuarding)
+        {
+            animator.SetTrigger(GuardHitParam);
+            Debug.Log("<color=yellow>BLOCKED! (Dragonslayer absorbed the blow)</color>");
+            health -= damage * 0.15f;
             return;
         }
         health -= damage;
