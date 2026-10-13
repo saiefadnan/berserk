@@ -186,8 +186,8 @@ public class PlayerMovement : MonoBehaviour
             if (lungeSpeed > 0)
             {
                 Vector3 lungeDirection = figure.transform.forward * lungeSpeed;
-                moveDirection.x = lungeDirection.x;
-                moveDirection.z = lungeDirection.z;
+                // moveDirection.x = lungeDirection.x;
+                // moveDirection.z = lungeDirection.z;
             }
         }
         if (isGuarding)
