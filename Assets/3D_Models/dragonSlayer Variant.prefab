@@ -64,6 +64,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: dragonSlayer Variant
       objectReference: {fileID: 0}
+    - target: {fileID: 1101363155626138173, guid: b49acef9b19465143a414273ecadc433, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.00097
+      objectReference: {fileID: 0}
+    - target: {fileID: 1101363155626138173, guid: b49acef9b19465143a414273ecadc433, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.00008
+      objectReference: {fileID: 0}
+    - target: {fileID: 1101363155626138173, guid: b49acef9b19465143a414273ecadc433, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.00144
+      objectReference: {fileID: 0}
     - target: {fileID: 4093798763295974153, guid: b49acef9b19465143a414273ecadc433, type: 3}
       propertyPath: m_IsActive
       value: 0

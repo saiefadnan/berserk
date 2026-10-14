@@ -170,24 +170,23 @@ public class PlayerMovement : MonoBehaviour
             if (inAttack1 && normTime >= 0.20f && normTime < 0.45f)
             {
                 float t = Mathf.Sin((normTime - 0.20f) / 0.25f * Mathf.PI);
-                lungeSpeed = 5.8f * t;
+                lungeSpeed = 4.5f * t;
             }
-            else if (inAttack2 && normTime >= 0.35f && normTime <= 0.60f)
+            else if (inAttack2 && normTime >= 0.20f && normTime <= 0.45f)
             {
-                float t = Mathf.Sin((normTime - 0.35f) / (0.60f - 0.35f) * Mathf.PI);
-                lungeSpeed = 4.2f * t;
+                float t = Mathf.Sin((normTime - 0.20f) / 0.25f * Mathf.PI);
+                lungeSpeed = 4.0f * t;
             }
-            // Hit 3: Colossal overhead slam driving forward
-            else if (inAttack3 && normTime >= 0.25f && normTime <= 0.45f)
+            else if (inAttack3 && normTime >= 0.30f && normTime <= 0.55f)
             {
-                float t = Mathf.Sin((normTime - 0.25f) / (0.45f - 0.25f) * Mathf.PI);
-                lungeSpeed = 5.8f * t;
+                float t = Mathf.Sin((normTime - 0.30f) / 0.25f * Mathf.PI);
+                lungeSpeed = 5.0f * t;
             }
             if (lungeSpeed > 0)
             {
                 Vector3 lungeDirection = figure.transform.forward * lungeSpeed;
-                // moveDirection.x = lungeDirection.x;
-                // moveDirection.z = lungeDirection.z;
+                moveDirection.x = lungeDirection.x;
+                moveDirection.z = lungeDirection.z;
             }
         }
         if (isGuarding)

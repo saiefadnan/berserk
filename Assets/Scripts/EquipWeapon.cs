@@ -20,9 +20,6 @@ public class EquipWeapon : MonoBehaviour
     private readonly Vector3 guardLocalPos = new Vector3(0.61f, -0.38f, 0.78f);
     private readonly Quaternion guardLocalRot = Quaternion.Euler(298.64f, 199.55f, 347.32f);
 
-    // private readonly Vector3 attackLocalPos = new Vector3(-0.947f, -0.057f, -0.940f);
-    private readonly Vector3 attackLocalPos = new Vector3(-0.562f, 0.008f, -1.037f);
-    private readonly Quaternion attackLocalRot = Quaternion.Euler(31.00f, 19.85f, 100.88f);
     [Header("Two-Handed IK")]
     [SerializeField] private float ikSmoothSpeed = 12f;
     private float currentIKWeight = 0f;
@@ -61,39 +58,40 @@ public class EquipWeapon : MonoBehaviour
     void OnAnimatorIK(int layerIndex)
     {
         if (animator == null) return;
-        float targetWeight = (equip && (isAttacking || isGuarding) && leftHandGripPoint != null) ? 1f : 0f;
+        // Two-handed attack animations already drive both hands naturally on the hilt.
+        // IK is only needed during guard stance.
+        float targetWeight = (equip && isGuarding && leftHandGripPoint != null) ? 1f : 0f;
         currentIKWeight = Mathf.MoveTowards(currentIKWeight, targetWeight, Time.deltaTime * 10f);
         if (currentIKWeight > 0.001f && leftHandGripPoint != null)
         {
-            Debug.Log("Setting IK for left hand with weight: " + currentIKWeight);
             animator.SetIKPositionWeight(AvatarIKGoal.LeftHand, currentIKWeight);
-            // animator.SetIKRotationWeight(AvatarIKGoal.LeftHand, currentIKWeight);
             animator.SetIKPosition(AvatarIKGoal.LeftHand, leftHandGripPoint.position);
-            // animator.SetIKRotation(AvatarIKGoal.LeftHand, leftHandGripPoint.rotation);
         }
         else
         {
             animator.SetIKPositionWeight(AvatarIKGoal.LeftHand, 0f);
-            // animator.SetIKRotationWeight(AvatarIKGoal.LeftHand, 0f);
         }
     }
     void LateUpdate()
     {
         if (currEquipped != null && equip)
         {
-            if (isAttacking)
+            if (isGuarding)
             {
-                // Snap directly into grip during attack swings for solid hold
-                currEquipped.transform.localPosition = attackLocalPos;
-                currEquipped.transform.localRotation = attackLocalRot;
+                currEquipped.transform.localPosition = Vector3.Lerp(currEquipped.transform.localPosition, guardLocalPos, Time.deltaTime * socketTransitionSpeed);
+                currEquipped.transform.localRotation = Quaternion.Slerp(currEquipped.transform.localRotation, guardLocalRot, Time.deltaTime * socketTransitionSpeed);
+            }
+            else if (isAttacking)
+            {
+                // Locked into solid hand grip during all attack swings
+                currEquipped.transform.localPosition = defaultLocalPos;
+                currEquipped.transform.localRotation = defaultLocalRot;
             }
             else
             {
-                Vector3 targetPos = isGuarding ? guardLocalPos : defaultLocalPos;
-                Quaternion targetRot = isGuarding ? guardLocalRot : defaultLocalRot;
-
-                currEquipped.transform.localPosition = Vector3.Lerp(currEquipped.transform.localPosition, targetPos, Time.deltaTime * socketTransitionSpeed);
-                currEquipped.transform.localRotation = Quaternion.Slerp(currEquipped.transform.localRotation, targetRot, Time.deltaTime * socketTransitionSpeed);
+                // Smoothly return from guard if we were guarding, otherwise maintain default grip
+                currEquipped.transform.localPosition = Vector3.Lerp(currEquipped.transform.localPosition, defaultLocalPos, Time.deltaTime * socketTransitionSpeed);
+                currEquipped.transform.localRotation = Quaternion.Slerp(currEquipped.transform.localRotation, defaultLocalRot, Time.deltaTime * socketTransitionSpeed);
             }
             wasAttacking = isAttacking;
         }
