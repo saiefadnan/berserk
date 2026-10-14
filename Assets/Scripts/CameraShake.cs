@@ -4,7 +4,7 @@ using UnityEngine;
 public class CameraShake : MonoBehaviour
 {
     public static CameraShake Instance { get; private set; }
-
+    private float frequency = 25f;
     private Coroutine shakeCoroutine;
     private Vector3 currentShakeOffset = Vector3.zero;
     private Vector3 lastAppliedOffset = Vector3.zero;
@@ -41,8 +41,8 @@ public class CameraShake : MonoBehaviour
             float progress = elapsed / duration;
             // Quadratic falloff for sharp impact kick and smooth decay
             float damper = 1f - (progress * progress);
-            float x = (Random.value * 2f - 1f) * magnitude * damper;
-            float y = (Random.value * 2f - 1f) * magnitude * damper;
+            float x = (Mathf.PerlinNoise(Time.time * frequency, 0f) - 0.5f) * 2f * magnitude * damper;
+            float y = (Mathf.PerlinNoise(0f, Time.time * frequency) - 0.5f) * 2f * magnitude * damper;
 
             currentShakeOffset = new Vector3(x, y, 0f);
 

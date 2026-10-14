@@ -87,8 +87,8 @@ public class Sword : MonoBehaviour
 
     public void AudioSlash()
     {
-        if (audioSource != null && slashSound != null)
-            audioSource.PlayOneShot(slashSound);
+        // if (audioSource != null && slashSound != null)
+        //     audioSource.PlayOneShot(slashSound);
     }
 
     public void AnimateSlash()

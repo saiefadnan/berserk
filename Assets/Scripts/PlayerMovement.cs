@@ -172,7 +172,7 @@ public class PlayerMovement : MonoBehaviour
 
             if (inAttack1)
             {
-                // Hit 1: Wide Right-to-Left Cleave
+                // Hit 1: Heavy Forward Cleave (Great_Sword_Attack)
                 // 0.00 - 0.25: Deliberate windup anticipation
                 // 0.25 - 0.50: Explosive violent slash + surging forward lunge
                 // 0.50 - 0.85: Weighted recovery follow-through
@@ -197,17 +197,17 @@ public class PlayerMovement : MonoBehaviour
             }
             else if (inAttack2)
             {
-                // Hit 2: Left-to-Right Backhand Cleave
-                // 0.00 - 0.25: Winding reverse stance
-                // 0.25 - 0.50: Devastating backhand sweep + forward surge
-                // 0.50 - 0.85: Heavy momentum arrest
-                if (normTime < 0.25f)
+                // Hit 2: 360 Whirlwind Spin (Great_Sword_High_Spin_Attack)
+                // 0.00 - 0.20: Torso coil & windup
+                // 0.20 - 0.50: Full 360 whirlwind spin + forward sweep
+                // 0.50 - 0.85: Weighted momentum stabilization
+                if (normTime < 0.20f)
                 {
                     currentAnimSpeed = 1.1f;
                 }
-                else if (normTime >= 0.25f && normTime < 0.50f)
+                else if (normTime >= 0.20f && normTime < 0.50f)
                 {
-                    float t = Mathf.Sin((normTime - 0.25f) / 0.25f * Mathf.PI);
+                    float t = Mathf.Sin((normTime - 0.20f) / 0.30f * Mathf.PI);
                     lungeSpeed = 6.5f * t;
                     currentAnimSpeed = 2.3f;
                 }
@@ -222,19 +222,19 @@ public class PlayerMovement : MonoBehaviour
             }
             else if (inAttack3)
             {
-                // Hit 3: Rising Vertical Upper Slash Launcher
-                // 0.00 - 0.30: Deep crouch dip dragging blade from floor
-                // 0.30 - 0.58: Colossal skyward launch + heavy forward drive
-                // 0.58 - 0.88: Lofty gravity recovery
-                if (normTime < 0.30f)
+                // Hit 3: Colossal Overhead Downward Earth-Slam (Standing_Melee_Attack_Downward)
+                // 0.00 - 0.32: Massive blade lift overhead & backward arch
+                // 0.32 - 0.58: Violent downward slam + ground-crushing impact lunge
+                // 0.58 - 0.88: Heavy blade recovery
+                if (normTime < 0.32f)
                 {
-                    currentAnimSpeed = 1.0f;
+                    currentAnimSpeed = 1.1f;
                 }
-                else if (normTime >= 0.30f && normTime < 0.58f)
+                else if (normTime >= 0.32f && normTime < 0.58f)
                 {
-                    float t = Mathf.Sin((normTime - 0.30f) / 0.28f * Mathf.PI);
-                    lungeSpeed = 8.0f * t;
-                    currentAnimSpeed = 2.5f;
+                    float t = Mathf.Sin((normTime - 0.32f) / 0.26f * Mathf.PI);
+                    lungeSpeed = 8.5f * t;
+                    currentAnimSpeed = 2.4f;
                 }
                 else if (normTime >= 0.58f && normTime < 0.88f)
                 {
