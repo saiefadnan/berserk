@@ -166,27 +166,100 @@ public class PlayerMovement : MonoBehaviour
                 StopFootStep();
                 stepRunning = false;
             }
+
             float lungeSpeed = 0.0f;
-            if (inAttack1 && normTime >= 0.20f && normTime < 0.45f)
+            float currentAnimSpeed = 1.0f;
+
+            if (inAttack1)
             {
-                float t = Mathf.Sin((normTime - 0.20f) / 0.25f * Mathf.PI);
-                lungeSpeed = 4.5f * t;
+                // Hit 1: Wide Right-to-Left Cleave
+                // 0.00 - 0.25: Deliberate windup anticipation
+                // 0.25 - 0.50: Explosive violent slash + surging forward lunge
+                // 0.50 - 0.85: Weighted recovery follow-through
+                if (normTime < 0.25f)
+                {
+                    currentAnimSpeed = 1.1f;
+                }
+                else if (normTime >= 0.25f && normTime < 0.50f)
+                {
+                    float t = Mathf.Sin((normTime - 0.25f) / 0.25f * Mathf.PI);
+                    lungeSpeed = 7.0f * t;
+                    currentAnimSpeed = 2.4f;
+                }
+                else if (normTime >= 0.50f && normTime < 0.85f)
+                {
+                    currentAnimSpeed = 0.85f;
+                }
+                else
+                {
+                    currentAnimSpeed = 1.0f;
+                }
             }
-            else if (inAttack2 && normTime >= 0.20f && normTime <= 0.45f)
+            else if (inAttack2)
             {
-                float t = Mathf.Sin((normTime - 0.20f) / 0.25f * Mathf.PI);
-                lungeSpeed = 4.0f * t;
+                // Hit 2: Left-to-Right Backhand Cleave
+                // 0.00 - 0.25: Winding reverse stance
+                // 0.25 - 0.50: Devastating backhand sweep + forward surge
+                // 0.50 - 0.85: Heavy momentum arrest
+                if (normTime < 0.25f)
+                {
+                    currentAnimSpeed = 1.1f;
+                }
+                else if (normTime >= 0.25f && normTime < 0.50f)
+                {
+                    float t = Mathf.Sin((normTime - 0.25f) / 0.25f * Mathf.PI);
+                    lungeSpeed = 6.5f * t;
+                    currentAnimSpeed = 2.3f;
+                }
+                else if (normTime >= 0.50f && normTime < 0.85f)
+                {
+                    currentAnimSpeed = 0.85f;
+                }
+                else
+                {
+                    currentAnimSpeed = 1.0f;
+                }
             }
-            else if (inAttack3 && normTime >= 0.30f && normTime <= 0.55f)
+            else if (inAttack3)
             {
-                float t = Mathf.Sin((normTime - 0.30f) / 0.25f * Mathf.PI);
-                lungeSpeed = 5.0f * t;
+                // Hit 3: Rising Vertical Upper Slash Launcher
+                // 0.00 - 0.30: Deep crouch dip dragging blade from floor
+                // 0.30 - 0.58: Colossal skyward launch + heavy forward drive
+                // 0.58 - 0.88: Lofty gravity recovery
+                if (normTime < 0.30f)
+                {
+                    currentAnimSpeed = 1.0f;
+                }
+                else if (normTime >= 0.30f && normTime < 0.58f)
+                {
+                    float t = Mathf.Sin((normTime - 0.30f) / 0.28f * Mathf.PI);
+                    lungeSpeed = 8.0f * t;
+                    currentAnimSpeed = 2.5f;
+                }
+                else if (normTime >= 0.58f && normTime < 0.88f)
+                {
+                    currentAnimSpeed = 0.80f;
+                }
+                else
+                {
+                    currentAnimSpeed = 1.0f;
+                }
             }
+
+            animator.speed = currentAnimSpeed;
+
             if (lungeSpeed > 0)
             {
                 Vector3 lungeDirection = figure.transform.forward * lungeSpeed;
                 moveDirection.x = lungeDirection.x;
                 moveDirection.z = lungeDirection.z;
+            }
+        }
+        else
+        {
+            if (animator.speed != 1.0f)
+            {
+                animator.speed = 1.0f;
             }
         }
         if (isGuarding)
