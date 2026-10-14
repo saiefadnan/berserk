@@ -5,8 +5,9 @@ public class CameraShake : MonoBehaviour
 {
     public static CameraShake Instance { get; private set; }
 
-    private Vector3 originalLocalPos;
     private Coroutine shakeCoroutine;
+    private Vector3 currentShakeOffset = Vector3.zero;
+    private Vector3 lastAppliedOffset = Vector3.zero;
 
     void Awake()
     {
@@ -21,11 +22,6 @@ public class CameraShake : MonoBehaviour
         }
     }
 
-    void Start()
-    {
-        originalLocalPos = transform.localPosition;
-    }
-
     public void Shake(float duration, float magnitude)
     {
         if (!gameObject.activeInHierarchy) return;
@@ -33,7 +29,6 @@ public class CameraShake : MonoBehaviour
         if (shakeCoroutine != null)
         {
             StopCoroutine(shakeCoroutine);
-            transform.localPosition = originalLocalPos;
         }
         shakeCoroutine = StartCoroutine(DoShake(duration, magnitude));
     }
@@ -49,14 +44,34 @@ public class CameraShake : MonoBehaviour
             float x = (Random.value * 2f - 1f) * magnitude * damper;
             float y = (Random.value * 2f - 1f) * magnitude * damper;
 
-            transform.localPosition = originalLocalPos + new Vector3(x, y, 0f);
+            currentShakeOffset = new Vector3(x, y, 0f);
 
             // Unscaled time so hitstop micro-freezes don't pause the screen rattle
             elapsed += Time.unscaledDeltaTime;
             yield return null;
         }
 
-        transform.localPosition = originalLocalPos;
+        currentShakeOffset = Vector3.zero;
         shakeCoroutine = null;
+    }
+
+    void LateUpdate()
+    {
+        // Revert last frame's shake offset so third-person camera controllers maintain their true position
+        transform.localPosition -= lastAppliedOffset;
+
+        // Apply this frame's dynamic shake offset
+        transform.localPosition += currentShakeOffset;
+
+        // Track what was applied
+        lastAppliedOffset = currentShakeOffset;
+    }
+
+    void OnDisable()
+    {
+        // Safety cleanup if disabled during shake
+        transform.localPosition -= lastAppliedOffset;
+        currentShakeOffset = Vector3.zero;
+        lastAppliedOffset = Vector3.zero;
     }
 }
