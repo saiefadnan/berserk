@@ -8,8 +8,8 @@ public class EquipWeapon : MonoBehaviour
     [SerializeField] private GameObject shootingMechanism;
     private Sword sword;
     private ShootMecha shootingMechaComponent;
-    GameObject currEquipped;
-    GameObject currUnequipped;
+    [System.NonSerialized] public GameObject currEquipped;
+    [System.NonSerialized] public GameObject currUnequipped;
     public static bool equip;
     public bool nextAttack = false;
 
@@ -43,6 +43,14 @@ public class EquipWeapon : MonoBehaviour
         if (currEquipped != null)
         {
             leftHandGripPoint = currEquipped.transform.Find("LeftHandGrip");
+            if (leftHandGripPoint == null)
+            {
+                GameObject gripGo = new GameObject("LeftHandGrip");
+                gripGo.transform.SetParent(currEquipped.transform, false);
+                gripGo.transform.localPosition = new Vector3(0.00090f, 0.00004f, 0.00148f);
+                gripGo.transform.localRotation = Quaternion.identity;
+                leftHandGripPoint = gripGo.transform;
+            }
         }
     }
 
@@ -58,18 +66,21 @@ public class EquipWeapon : MonoBehaviour
     void OnAnimatorIK(int layerIndex)
     {
         if (animator == null) return;
-        // Two-handed attack animations already drive both hands naturally on the hilt.
-        // IK is only needed during guard stance.
-        float targetWeight = (equip && isGuarding && leftHandGripPoint != null) ? 1f : 0f;
-        currentIKWeight = Mathf.MoveTowards(currentIKWeight, targetWeight, Time.deltaTime * 10f);
+        // Two-handed grip IK during guard stance and attack swings
+        float targetWeight = (equip && (isGuarding || isAttacking) && leftHandGripPoint != null) ? 1f : 0f;
+        float blendSpeed = isAttacking ? 30f : ikSmoothSpeed;
+        currentIKWeight = Mathf.MoveTowards(currentIKWeight, targetWeight, Time.deltaTime * blendSpeed);
         if (currentIKWeight > 0.001f && leftHandGripPoint != null)
         {
             animator.SetIKPositionWeight(AvatarIKGoal.LeftHand, currentIKWeight);
             animator.SetIKPosition(AvatarIKGoal.LeftHand, leftHandGripPoint.position);
+            animator.SetIKRotationWeight(AvatarIKGoal.LeftHand, currentIKWeight);
+            animator.SetIKRotation(AvatarIKGoal.LeftHand, leftHandGripPoint.rotation);
         }
         else
         {
             animator.SetIKPositionWeight(AvatarIKGoal.LeftHand, 0f);
+            animator.SetIKRotationWeight(AvatarIKGoal.LeftHand, 0f);
         }
     }
     void LateUpdate()
@@ -99,6 +110,12 @@ public class EquipWeapon : MonoBehaviour
 
     /// Start is called once before the first execution of Update after the MonoBehaviour is created
 
+
+    public void ForceEquip()
+    {
+        if (currEquipped == null) return;
+        if (!equip) Equip();
+    }
 
     void Equip()
     {

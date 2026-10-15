@@ -25,7 +25,7 @@ Transform:
   m_GameObject: {fileID: 482270054200412059}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.00089, y: 0, z: 0.00145}
+  m_LocalPosition: {x: 0.0009, y: 0.00004, z: 0.00148}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -131,6 +131,7 @@ MonoBehaviour:
   audioSource: {fileID: 8142249806408886888}
   hitAudio: {fileID: 8300000, guid: 06a7557fcc0bde0479039f88998f3842, type: 3}
   slashSound: {fileID: 8300000, guid: b0d4e4f2481034b408921d0778794e51, type: 3}
+  swordTrail: {fileID: 0}
 --- !u!1 &834875114661749936
 GameObject:
   m_ObjectHideFlags: 0

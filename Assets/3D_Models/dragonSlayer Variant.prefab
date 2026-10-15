@@ -217,15 +217,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1101363155626138173, guid: b49acef9b19465143a414273ecadc433, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0.00097
+      value: 0.0009
       objectReference: {fileID: 0}
     - target: {fileID: 1101363155626138173, guid: b49acef9b19465143a414273ecadc433, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.00008
+      value: 0.00004
       objectReference: {fileID: 0}
     - target: {fileID: 1101363155626138173, guid: b49acef9b19465143a414273ecadc433, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.00144
+      value: 0.00148
       objectReference: {fileID: 0}
     - target: {fileID: 2108390860485846363, guid: b49acef9b19465143a414273ecadc433, type: 3}
       propertyPath: swordTrail
