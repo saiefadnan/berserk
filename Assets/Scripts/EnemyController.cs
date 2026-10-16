@@ -249,16 +249,13 @@ public class EnemyController : MonoBehaviour
 
         // Stop physics drift
         Rigidbody rb = GetComponent<Rigidbody>();
-        if (rb != null)
+        if (rb != null && !rb.isKinematic)
         {
             rb.linearVelocity  = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
         }
 
         health -= damage;
-
-        if (bloodSplatter != null) bloodSplatter.Play();
-
         if (health <= 0)
         {
             // Maybe fake death?

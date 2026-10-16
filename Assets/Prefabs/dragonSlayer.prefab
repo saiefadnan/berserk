@@ -128,6 +128,7 @@ MonoBehaviour:
   damage: 10
   slashEffect: {fileID: 7913247862302681297}
   flashEffectPrefab: {fileID: 7651888310079167479, guid: dab0264fd12e6e448ba5963b74deccfc, type: 3}
+  bloodEffectPrefab: {fileID: 1000013355911406, guid: d32aa916f50cac94db11e6f19821a58f, type: 3}
   audioSource: {fileID: 8142249806408886888}
   hitAudio: {fileID: 8300000, guid: 06a7557fcc0bde0479039f88998f3842, type: 3}
   slashSound: {fileID: 8300000, guid: b0d4e4f2481034b408921d0778794e51, type: 3}

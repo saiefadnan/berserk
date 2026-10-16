@@ -6,6 +6,7 @@ public class Sword : MonoBehaviour
     public int damage = 10;
     public ParticleSystem slashEffect;
     [SerializeField] private GameObject flashEffectPrefab;
+    [SerializeField] private GameObject bloodEffectPrefab;
     public AudioSource audioSource;
     public AudioClip hitAudio;
     public AudioClip slashSound;
@@ -13,6 +14,11 @@ public class Sword : MonoBehaviour
     private bool cool = false;
     private Animator animator;
     private Coroutine hitStopCoroutine;
+
+    private void Start()
+    {
+        animator = GetComponentInParent<Animator>();
+    }
 
     // In Inspector: check "Is Trigger" on the Box Collider
     private void OnTriggerEnter(Collider other)
@@ -23,12 +29,17 @@ public class Sword : MonoBehaviour
             if (enemy != null && cool)
             {
                 // No ContactPoint available with triggers, use transform instead
+                Vector3 hitPoint = other.ClosestPoint(transform.position);
+                Vector3 hitNormal = (hitPoint - transform.position).normalized;
+
+                PlayBloodSplatter(hitPoint, hitNormal);
                 PlaySparkFlash(transform.position, other.transform.position);
                 PlayHitAudio();
                 enemy.TakeDamage(damage);
 
                 // Guts Combat Juice: Micro-hitstop & heavy impact camera shake
-                TriggerHitStop(0.06f);
+                Animator enemyAnim = enemy.GetComponentInChildren<Animator>();
+                TriggerHitStop(0.07f, enemyAnim);
                 if (CameraShake.Instance != null)
                 {
                     CameraShake.Instance.Shake(0.16f, 0.20f);
@@ -37,17 +48,19 @@ public class Sword : MonoBehaviour
         }
     }
 
-    public void TriggerHitStop(float duration)
+    public void TriggerHitStop(float duration, Animator enemyAnimator)
     {
         if (hitStopCoroutine != null) StopCoroutine(hitStopCoroutine);
-        hitStopCoroutine = StartCoroutine(DoHitStop(duration));
+        hitStopCoroutine = StartCoroutine(DoHitStop(duration, enemyAnimator));
     }
 
-    private IEnumerator DoHitStop(float duration)
+    private IEnumerator DoHitStop(float duration, Animator enemyAnimator)
     {
-        Time.timeScale = 0.05f;
+        if (animator != null) animator.speed = 0.0f;
+        if (enemyAnimator != null) enemyAnimator.speed = 0.0f;
         yield return new WaitForSecondsRealtime(duration);
-        Time.timeScale = 1.0f;
+        if (animator != null) animator.speed = 1.0f;
+        if (enemyAnimator != null) enemyAnimator.speed = 1.0f;
         hitStopCoroutine = null;
     }
 
@@ -105,6 +118,16 @@ public class Sword : MonoBehaviour
         if (CameraShake.Instance != null)
         {
             CameraShake.Instance.Shake(0.10f, 0.08f);
+        }
+    }
+
+    public void PlayBloodSplatter(Vector3 hitPoint, Vector3 normal)
+    {
+        if (bloodEffectPrefab != null)
+        {
+            Quaternion rot = (normal.sqrMagnitude > 0.001f) ? Quaternion.LookRotation(normal) : Quaternion.identity;
+            GameObject effect = Instantiate(bloodEffectPrefab, hitPoint, rot);
+            Destroy(effect, 3f);
         }
     }
 }
