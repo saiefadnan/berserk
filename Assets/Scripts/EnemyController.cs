@@ -40,6 +40,12 @@ public class EnemyController : MonoBehaviour
     public float chaseSpeed = 4.5f;
     public float chargeSpeed = 8f;     // lunge speed
 
+    [Header("Dismemberment Setup")]
+    [SerializeField] private Transform headBone;        //
+    [SerializeField] private GameObject helmetProp;     // Paladin_J_Nordstrom_Helmet(if equipped)
+    [SerializeField] private GameObject weaponProp;
+    [SerializeField] private GameObject shieldProp;
+
     // ─────────────────────────────────────────────
     //  BEHAVIOUR TUNING
     // ─────────────────────────────────────────────
@@ -101,14 +107,15 @@ public class EnemyController : MonoBehaviour
     private void Awake()
     {
         player = GameObject.Find("player").transform;
-        agent  = GetComponent<NavMeshAgent>();
+        agent = GetComponent<NavMeshAgent>();
         animator = GetComponentInChildren<Animator>();
-
+        if (headBone == null && animator != null && animator.isHuman)
+        {
+            headBone = animator.GetBoneTransform(HumanBodyBones.Head);
+        }
         agent.speed = patrolSpeed;
-
         // Random start offset so multiple enemies don't sync perfectly
         decisionTimer = Random.Range(0f, DECISION_INTERVAL);
-
         // Start subtle ambient breathing
         StartCoroutine(AmbientBreathing());
     }
@@ -119,7 +126,7 @@ public class EnemyController : MonoBehaviour
     void Update()
     {
         if (dead && !fakingDeath) return;
-        if (fakingDeath)         return; // coroutine handles fake-death timing
+        if (fakingDeath) return; // coroutine handles fake-death timing
 
         SyncAnimatorStopState();
         DetectPlayer();
@@ -148,9 +155,9 @@ public class EnemyController : MonoBehaviour
     // ─────────────────────────────────────────────
     private void DetectPlayer()
     {
-        playerInSightRange  = Physics.CheckSphere(transform.position, sightRange,   whatIsPlayer);
-        playerInAttackRange = Physics.CheckSphere(transform.position, attackRange,  whatIsPlayer);
-        playerHeard         = Physics.CheckSphere(transform.position, hearingRange, whatIsPlayer);
+        playerInSightRange = Physics.CheckSphere(transform.position, sightRange, whatIsPlayer);
+        playerInAttackRange = Physics.CheckSphere(transform.position, attackRange, whatIsPlayer);
+        playerHeard = Physics.CheckSphere(transform.position, hearingRange, whatIsPlayer);
     }
 
     // ─────────────────────────────────────────────
@@ -159,10 +166,10 @@ public class EnemyController : MonoBehaviour
     private void Patrol()
     {
         playGroanOnce = true;
-        agent.speed   = patrolSpeed;
+        agent.speed = patrolSpeed;
 
         if (!walkPointSet) SearchWalkPoint();
-        else               agent.SetDestination(walkPoint);
+        else agent.SetDestination(walkPoint);
 
         if ((transform.position - walkPoint).magnitude < 1f)
             walkPointSet = false;
@@ -243,7 +250,7 @@ public class EnemyController : MonoBehaviour
     // ─────────────────────────────────────────────
     //  TAKE DAMAGE
     // ─────────────────────────────────────────────
-    public void TakeDamage(int damage)
+    public void TakeDamage(int damage, Vector3 hitDirection = default, Vector3 hitPoint = default)
     {
         if (dead) return;
 
@@ -251,7 +258,7 @@ public class EnemyController : MonoBehaviour
         Rigidbody rb = GetComponent<Rigidbody>();
         if (rb != null && !rb.isKinematic)
         {
-            rb.linearVelocity  = Vector3.zero;
+            rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
         }
 
@@ -262,7 +269,7 @@ public class EnemyController : MonoBehaviour
             if (!fakingDeath && Random.value < fakeDeathChance)
                 StartCoroutine(FakeDeath());
             else
-                Die();
+                Die(hitDirection, hitPoint);
         }
         else
         {
@@ -273,13 +280,53 @@ public class EnemyController : MonoBehaviour
     // ─────────────────────────────────────────────
     //  DEATH
     // ─────────────────────────────────────────────
-    private void Die()
+    private void Die(Vector3 hitDirection = default, Vector3 hitPoint = default)
     {
         dead = true;
-        agent.isStopped = true;
-        animator.SetTrigger("knock_down");
         StopAllCoroutines();
+        if (agent != null)
+        {
+            agent.enabled = false;
+        }
+        if (animator != null)
+        {
+            animator.enabled = false;
+        }
+        TriggerDismemberment(hitDirection, hitPoint);
+        Rigidbody rb = GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.isKinematic = false;
+            rb.useGravity = true;
+
+            Vector3 forceDir = (hitDirection != default) ? hitDirection.normalized : -transform.forward;
+
+            Vector3 launchVelocity = forceDir * 6f + Vector3.up * 1f;
+            rb.AddForce(launchVelocity, ForceMode.Impulse);
+            rb.AddTorque(Random.insideUnitSphere * 1f, ForceMode.Impulse);
+        }
         Invoke(nameof(DestroyEnemy), 10f);
+    }
+
+    private void TriggerDismemberment(Vector3 hitDirection, Vector3 hitPoint)
+    {
+        if (weaponProp != null)
+        {
+            DetachAndLaunchProp(weaponProp, hitDirection * 2f + Vector3.up * 2f, 5f);
+        }
+        if (shieldProp != null)
+        {
+            DetachAndLaunchProp(shieldProp, hitDirection * 2f + Vector3.up * 2f, 5f);
+        }
+
+        bool hitHeadZone = (headBone != null) && (hitPoint == default || hitPoint.y > (headBone.position.y - 0.35f));
+
+        if (hitHeadZone)
+        {
+            Decapitate(hitDirection);
+        }
+
+
     }
 
     private void DestroyEnemy() => Destroy(gameObject);
@@ -303,6 +350,68 @@ public class EnemyController : MonoBehaviour
         }
     }
 
+    private void Decapitate(Vector3 hitDirection)
+    {
+        // Detach helmet if present
+        if (helmetProp != null)
+        {
+            Vector3 launchVelocity = (hitDirection.normalized * 3f) + (Vector3.up * 1.5f);
+            DetachAndLaunchProp(helmetProp, launchVelocity, 6f);
+        }
+        if (headBone != null)
+        {
+            headBone.localScale = Vector3.zero;
+        }
+    }
+
+    private void DetachAndLaunchProp(GameObject prop, Vector3 launchVelocity, float torqueForce)
+    {
+        if (prop == null) return;
+        SkinnedMeshRenderer smr = prop.GetComponent<SkinnedMeshRenderer>();
+        if (smr != null)
+        {
+            UnityEngine.Mesh bakedMesh = new UnityEngine.Mesh();
+            smr.BakeMesh(bakedMesh);
+            Material[] mats = smr.sharedMaterials;
+            Vector3 meshCenter = bakedMesh.bounds.center;
+            Vector3[] verts = bakedMesh.vertices;
+            for (int i = 0; i < verts.Length; i++)
+            {
+                verts[i] -= meshCenter;
+            }
+            bakedMesh.vertices = verts;
+            bakedMesh.RecalculateBounds();
+            bakedMesh.RecalculateNormals();
+
+            smr.enabled = false;
+            Destroy(smr);
+
+            MeshFilter mf = prop.AddComponent<MeshFilter>();
+            mf.sharedMesh = bakedMesh;
+
+            MeshRenderer mr = prop.AddComponent<MeshRenderer>();
+            mr.materials = mats;
+
+            prop.transform.position += prop.transform.TransformDirection(meshCenter);
+        }
+        prop.transform.SetParent(null);
+        Rigidbody rb = prop.GetComponent<Rigidbody>();
+        if (rb == null)
+        {
+            rb = prop.AddComponent<Rigidbody>();
+        }
+        rb.isKinematic = false;
+        rb.useGravity = true;
+        Collider col = prop.GetComponent<Collider>();
+        if (col == null)
+        {
+            BoxCollider box = prop.AddComponent<BoxCollider>();
+            box.size = new Vector3(0.3f, 0.3f, 0.3f);
+        }
+        rb.AddForce(launchVelocity, ForceMode.Impulse);
+        rb.AddTorque(Random.insideUnitSphere * torqueForce, ForceMode.Impulse);
+        Destroy(prop, 10f);
+    }
     // ─────────────────────────────────────────────
     //  COROUTINE: CREEPY STARE
     //  Enemy stops dead, turns to face player, does nothing.
@@ -345,7 +454,7 @@ public class EnemyController : MonoBehaviour
         // SCREAM then CHARGE
         PlayRandomClip(screamClips);
         agent.isStopped = false;
-        agent.speed     = chargeSpeed;
+        agent.speed = chargeSpeed;
         animator.SetTrigger("run");
 
         float elapsed = 0f;
@@ -357,7 +466,7 @@ public class EnemyController : MonoBehaviour
         }
 
         agent.speed = chaseSpeed;
-        isCharging  = false;
+        isCharging = false;
         chargeRoutine = null;
     }
 
@@ -368,7 +477,7 @@ public class EnemyController : MonoBehaviour
     private IEnumerator FakeDeath()
     {
         fakingDeath = true;
-        health      = 1f; // survive on 1 hp
+        health = 1f; // survive on 1 hp
         agent.isStopped = true;
         animator.SetTrigger("knock_down");
 
@@ -379,9 +488,9 @@ public class EnemyController : MonoBehaviour
         // Only get back up if player is nearby
         if (Vector3.Distance(transform.position, player.position) < sightRange)
         {
-            health      = 50f; // revive with partial HP
+            health = 50f; // revive with partial HP
             fakingDeath = false;
-            dead        = false;
+            dead = false;
             agent.isStopped = false;
             animator.SetTrigger("hit_react"); // "getting up" animation
             PlayRandomClip(screamClips);
@@ -418,8 +527,8 @@ public class EnemyController : MonoBehaviour
     {
         if (health / 150f < 0.4f && !isLimping)
         {
-            isLimping   = true;
-            chaseSpeed  = Mathf.Max(chaseSpeed - 1.5f, 2f);
+            isLimping = true;
+            chaseSpeed = Mathf.Max(chaseSpeed - 1.5f, 2f);
             agent.speed = chaseSpeed;
             // Optionally set animator bool: animator.SetBool("isLimping", true);
         }
@@ -430,7 +539,7 @@ public class EnemyController : MonoBehaviour
     // ─────────────────────────────────────────────
     private void SyncAnimatorStopState()
     {
-        stateInfo       = animator.GetCurrentAnimatorStateInfo(0);
+        stateInfo = animator.GetCurrentAnimatorStateInfo(0);
         agent.isStopped = stateInfo.IsName("hit_react");
     }
 

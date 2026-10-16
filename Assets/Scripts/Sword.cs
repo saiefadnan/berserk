@@ -35,7 +35,8 @@ public class Sword : MonoBehaviour
                 PlayBloodSplatter(hitPoint, hitNormal);
                 PlaySparkFlash(transform.position, other.transform.position);
                 PlayHitAudio();
-                enemy.TakeDamage(damage);
+                Vector3 slashDirection = transform.forward;
+                enemy.TakeDamage(damage, slashDirection, hitPoint);
 
                 // Guts Combat Juice: Micro-hitstop & heavy impact camera shake
                 Animator enemyAnim = enemy.GetComponentInChildren<Animator>();
