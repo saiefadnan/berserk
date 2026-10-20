@@ -45,7 +45,8 @@ public class EnemyController : MonoBehaviour
     [SerializeField] private GameObject helmetProp;     // Paladin_J_Nordstrom_Helmet(if equipped)
     [SerializeField] private GameObject weaponProp;
     [SerializeField] private GameObject shieldProp;
-
+    [SerializeField] private GameObject stumpBloodFountainPrefab;
+    [SerializeField] private GameObject chunkExplosionPrefab;
     // ─────────────────────────────────────────────
     //  BEHAVIOUR TUNING
     // ─────────────────────────────────────────────
@@ -319,7 +320,7 @@ public class EnemyController : MonoBehaviour
             DetachAndLaunchProp(shieldProp, hitDirection * 2f + Vector3.up * 2f, 5f);
         }
 
-        bool hitHeadZone = (headBone != null) && (hitPoint == default || hitPoint.y > (headBone.position.y - 0.35f));
+        bool hitHeadZone = (headBone != null) && (hitPoint == default || hitPoint.y > (headBone.position.y - 0.65f));
 
         if (hitHeadZone)
         {
@@ -357,6 +358,14 @@ public class EnemyController : MonoBehaviour
         {
             Vector3 launchVelocity = (hitDirection.normalized * 3f) + (Vector3.up * 1.5f);
             DetachAndLaunchProp(helmetProp, launchVelocity, 6f);
+        }
+        if(chunkExplosionPrefab!=null && headBone!=null){
+            GameObject chunks = Instantiate(chunkExplosionPrefab,headBone.position, Quaternion.LookRotation(hitDirection.normalized));
+            Destroy(chunks, 1f);
+        }if(stumpBloodFountainPrefab!=null){
+            Transform stump = (headBone!=null && headBone.parent!=null)?headBone.parent:transform;
+            GameObject fountain = Instantiate(stumpBloodFountainPrefab, stump.position, Quaternion.LookRotation(stump.up), stump);
+            Destroy(fountain, 4f);
         }
         if (headBone != null)
         {
