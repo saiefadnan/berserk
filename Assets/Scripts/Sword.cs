@@ -34,7 +34,7 @@ public class Sword : MonoBehaviour
 
                 
                 if(damageable.surfaceType == SurfaceType.Flesh){
-                    PlayBloodSplatter(hitPoint, hitNormal);
+                    PlayBloodSplatter(hitPoint, hitNormal, other.transform);
                     // Guts Combat Juice: Micro-hitstop & heavy impact camera shake
                     Animator enemyAnim = other.GetComponentInChildren<Animator>();
                     TriggerHitStop(0.07f, enemyAnim);
@@ -132,12 +132,12 @@ public class Sword : MonoBehaviour
         }
     }
 
-    public void PlayBloodSplatter(Vector3 hitPoint, Vector3 normal)
+    public void PlayBloodSplatter(Vector3 hitPoint, Vector3 normal, Transform parent = null)
     {
         if (bloodEffectPrefab != null)
         {
             Quaternion rot = (normal.sqrMagnitude > 0.001f) ? Quaternion.LookRotation(normal) : Quaternion.identity;
-            GameObject effect = Instantiate(bloodEffectPrefab, hitPoint, rot);
+            GameObject effect = Instantiate(bloodEffectPrefab, hitPoint, rot, parent);
             Destroy(effect, 3f);
         }
     }

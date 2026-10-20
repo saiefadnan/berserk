@@ -13,16 +13,20 @@ public class ArrowHit : MonoBehaviour
         rb.linearVelocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
         IDamageable damageable = obj.gameObject.GetComponent<IDamageable>() ?? obj.gameObject.GetComponentInParent<IDamageable>();
-        if(damageable!=null && damageable.victim == transform.root.gameObject) return;
-       
-            rb.isKinematic = true;
-            transform.position = obj.contacts[0].point - obj.contacts[0].normal* 0.01f;
+        
+        rb.isKinematic = true;
+        if (obj.contactCount > 0)
+        {
+            transform.position = obj.contacts[0].point - obj.contacts[0].normal * 0.01f;
+        }
+
+        if(damageable==null || damageable.victim == transform.root.gameObject) return;
             
             if(damageable.surfaceType == SurfaceType.Flesh && bloodVfx!=null) {
                 Vector3 pos = obj.contacts[0].point + obj.contacts[0].normal * 0.02f;
                 Quaternion rotation = Quaternion.LookRotation(obj.contacts[0].normal);
                 GameObject blood = Instantiate(bloodVfx, pos, rotation);
-                hitArea = obj.transform.Find("mixamorig:Hips").Find("mixamorig:Spine").Find("hitArea");
+                hitArea = obj.transform.Find("mixamorig:Hips")?.Find("mixamorig:Spine") ?? obj.transform;
                 transform.SetParent(hitArea);
                 blood.transform.SetParent(hitArea);
                 playBloodAnim(blood);
