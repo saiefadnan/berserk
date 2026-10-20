@@ -23,29 +23,39 @@ public class Sword : MonoBehaviour
     // In Inspector: check "Is Trigger" on the Box Collider
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Enemy"))
-        {
-            EnemyController enemy = other.GetComponent<EnemyController>() ?? other.GetComponentInParent<EnemyController>();
-            if (enemy != null && cool)
+            if (cool)
             {
+                IDamageable damageable = other.GetComponent<IDamageable>() ?? other.GetComponentInParent<IDamageable>();
+                if (damageable == null || damageable.victim == transform.root.gameObject) return;
+
                 // No ContactPoint available with triggers, use transform instead
                 Vector3 hitPoint = other.ClosestPoint(transform.position);
                 Vector3 hitNormal = (hitPoint - transform.position).normalized;
 
-                PlayBloodSplatter(hitPoint, hitNormal);
-                PlaySparkFlash(transform.position, other.transform.position);
+                
+                if(damageable.surfaceType == SurfaceType.Flesh){
+                    PlayBloodSplatter(hitPoint, hitNormal);
+                    // Guts Combat Juice: Micro-hitstop & heavy impact camera shake
+                    Animator enemyAnim = other.GetComponentInChildren<Animator>();
+                    TriggerHitStop(0.07f, enemyAnim);
+                }
+
+                PlaySparkFlash(transform.position, other.transform.position);                
                 PlayHitAudio();
                 Vector3 slashDirection = transform.forward;
-                enemy.TakeDamage(damage, slashDirection, hitPoint);
+                DamageData data = new DamageData
+                {
+                    amount = damage,
+                    hitDirection = slashDirection,
+                    hitPoint = hitPoint,
+                    attacker = transform.root.gameObject
+                };
 
-                // Guts Combat Juice: Micro-hitstop & heavy impact camera shake
-                Animator enemyAnim = enemy.GetComponentInChildren<Animator>();
-                TriggerHitStop(0.07f, enemyAnim);
+                damageable.TakeDamage(data);
                 if (CameraShake.Instance != null)
                 {
                     CameraShake.Instance.Shake(0.16f, 0.20f);
                 }
-            }
         }
     }
 

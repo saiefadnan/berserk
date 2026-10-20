@@ -12,11 +12,13 @@ public class ArrowHit : MonoBehaviour
         hit=true;
         rb.linearVelocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
-        if(!obj.gameObject.CompareTag("Arrow")){
+        IDamageable damageable = obj.gameObject.GetComponent<IDamageable>() ?? obj.gameObject.GetComponentInParent<IDamageable>();
+        if(damageable!=null && damageable.victim == transform.root.gameObject) return;
+       
             rb.isKinematic = true;
             transform.position = obj.contacts[0].point - obj.contacts[0].normal* 0.01f;
             
-            if(obj.gameObject.CompareTag("Enemy")) {
+            if(damageable.surfaceType == SurfaceType.Flesh && bloodVfx!=null) {
                 Vector3 pos = obj.contacts[0].point + obj.contacts[0].normal * 0.02f;
                 Quaternion rotation = Quaternion.LookRotation(obj.contacts[0].normal);
                 GameObject blood = Instantiate(bloodVfx, pos, rotation);
@@ -24,12 +26,16 @@ public class ArrowHit : MonoBehaviour
                 transform.SetParent(hitArea);
                 blood.transform.SetParent(hitArea);
                 playBloodAnim(blood);
-                obj.gameObject.GetComponent<EnemyController>().TakeDamage(20);
             }
-        }
 
-        // transform.rotation = Quaternion.LookRotation(-obj.contacts[0].normal);
-        // transform.SetParent(obj.transform,true);
+            DamageData data = new DamageData
+            {
+                amount = 20,
+                hitDirection = transform.forward,
+                hitPoint = obj.contacts[0].point,
+                attacker = gameObject
+            };
+            damageable.TakeDamage(data);
     }
 
     public void playBloodAnim(GameObject blood){

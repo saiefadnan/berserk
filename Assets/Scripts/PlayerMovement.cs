@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(CharacterController))]
-public class PlayerMovement : MonoBehaviour
+public class PlayerMovement : MonoBehaviour, IDamageable
 {
     public Camera playerCamera;
     public GameObject figure;
@@ -336,6 +336,13 @@ public class PlayerMovement : MonoBehaviour
             transform.localRotation *= Quaternion.Euler(0, rotationY, 0);
         }
 
+    }
+
+    public SurfaceType surfaceType => SurfaceType.Flesh;
+    public GameObject victim => gameObject;
+
+    public void TakeDamage(DamageData data){
+        TakeDamage(data.amount);
     }
 
     public void TakeDamage(int damage)

@@ -6,7 +6,7 @@ using System.Collections;
 /// ZombieEnemy - Smart, horrifying, creepy, unpredictable and hard to beat.
 /// Drop-in replacement for your original EnemyController.
 /// </summary>
-public class EnemyController : MonoBehaviour
+public class EnemyController : MonoBehaviour, IDamageable
 {
     // ─────────────────────────────────────────────
     //  REFERENCES
@@ -151,6 +151,8 @@ public class EnemyController : MonoBehaviour
         CheckLimping();
     }
 
+    public SurfaceType surfaceType => SurfaceType.Flesh;
+    public GameObject victim => gameObject;
     // ─────────────────────────────────────────────
     //  DETECTION
     // ─────────────────────────────────────────────
@@ -238,8 +240,17 @@ public class EnemyController : MonoBehaviour
 
             // Deal random damage to the player
             int dmg = Random.Range(minDamage, maxDamage + 1);
-            PlayerMovement pv = player.GetComponent<PlayerMovement>();
-            if (pv != null) pv.TakeDamage(dmg);
+            if(player.TryGetComponent(out IDamageable target))
+            {
+                DamageData data = new DamageData
+                {
+                    amount = dmg,
+                    hitDirection = transform.forward,
+                    hitPoint = player.position,
+                    attacker = gameObject
+                };
+                target.TakeDamage(data);
+            }
 
             alreadyAttacked = true;
             Invoke(nameof(ResetAttack), timeBetweenAttacks);
@@ -251,6 +262,11 @@ public class EnemyController : MonoBehaviour
     // ─────────────────────────────────────────────
     //  TAKE DAMAGE
     // ─────────────────────────────────────────────
+
+    public void TakeDamage(DamageData data)
+    {
+        TakeDamage(data.amount, data.hitDirection, data.hitPoint);
+    }
     public void TakeDamage(int damage, Vector3 hitDirection = default, Vector3 hitPoint = default)
     {
         if (dead) return;
