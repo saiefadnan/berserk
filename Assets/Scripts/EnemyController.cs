@@ -6,7 +6,7 @@ using System.Collections;
 /// ZombieEnemy - Smart, horrifying, creepy, unpredictable and hard to beat.
 /// Drop-in replacement for your original EnemyController.
 /// </summary>
-public class EnemyController : MonoBehaviour, IDamageable
+public class EnemyController : MonoBehaviour
 {
     // ─────────────────────────────────────────────
     //  REFERENCES
@@ -25,7 +25,7 @@ public class EnemyController : MonoBehaviour, IDamageable
     //  STATS
     // ─────────────────────────────────────────────
     [Header("Stats")]
-    public float health = 150f;
+    private Health healthComponent;
     public float walkPointRange = 10f;
     public float sightRange = 18f;
     public float attackRange = 2.2f;
@@ -39,14 +39,6 @@ public class EnemyController : MonoBehaviour, IDamageable
     public float patrolSpeed = 1.2f;
     public float chaseSpeed = 4.5f;
     public float chargeSpeed = 8f;     // lunge speed
-
-    [Header("Dismemberment Setup")]
-    [SerializeField] private Transform headBone;        //
-    [SerializeField] private GameObject helmetProp;     // Paladin_J_Nordstrom_Helmet(if equipped)
-    [SerializeField] private GameObject weaponProp;
-    [SerializeField] private GameObject shieldProp;
-    [SerializeField] private GameObject stumpBloodFountainPrefab;
-    [SerializeField] private GameObject chunkExplosionPrefab;
     // ─────────────────────────────────────────────
     //  BEHAVIOUR TUNING
     // ─────────────────────────────────────────────
@@ -110,10 +102,7 @@ public class EnemyController : MonoBehaviour, IDamageable
         player = GameObject.Find("player").transform;
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponentInChildren<Animator>();
-        if (headBone == null && animator != null && animator.isHuman)
-        {
-            headBone = animator.GetBoneTransform(HumanBodyBones.Head);
-        }
+        healthComponent = GetComponent<Health>();
         agent.speed = patrolSpeed;
         // Random start offset so multiple enemies don't sync perfectly
         decisionTimer = Random.Range(0f, DECISION_INTERVAL);
@@ -151,8 +140,6 @@ public class EnemyController : MonoBehaviour, IDamageable
         CheckLimping();
     }
 
-    public SurfaceType surfaceType => SurfaceType.Flesh;
-    public GameObject victim => gameObject;
     // ─────────────────────────────────────────────
     //  DETECTION
     // ─────────────────────────────────────────────
@@ -258,21 +245,28 @@ public class EnemyController : MonoBehaviour, IDamageable
         }
     }
 
-    private void ResetAttack() => alreadyAttacked = false;
-
-    // ─────────────────────────────────────────────
-    //  TAKE DAMAGE
-    // ─────────────────────────────────────────────
-
-    public void TakeDamage(DamageData data)
+    private void OnEnable()
     {
-        TakeDamage(data.amount, data.hitDirection, data.hitPoint);
+        if (healthComponent != null)
+        {
+            healthComponent.OnDamaged += HandleDamaged;
+            healthComponent.OnDeath += HandleDeath;
+        }
     }
-    public void TakeDamage(int damage, Vector3 hitDirection = default, Vector3 hitPoint = default)
+
+    private void OnDisable()
+    {
+        if (healthComponent != null)
+        {
+            healthComponent.OnDamaged -= HandleDamaged;
+            healthComponent.OnDeath -= HandleDeath;
+        }
+    }
+
+    private void HandleDamaged(DamageData data)
     {
         if (dead) return;
 
-        // Stop physics drift
         Rigidbody rb = GetComponent<Rigidbody>();
         if (rb != null && !rb.isKinematic)
         {
@@ -280,21 +274,24 @@ public class EnemyController : MonoBehaviour, IDamageable
             rb.angularVelocity = Vector3.zero;
         }
 
-        health -= damage;
-        if (health <= 0)
+        animator.SetTrigger("hit_react");
+    }
+
+    private void HandleDeath(DamageData data)
+    {
+        if (dead) return;
+
+        if (!fakingDeath && Random.value < fakeDeathChance)
         {
-            // Maybe fake death?
-            if (!fakingDeath && Random.value < fakeDeathChance)
-                StartCoroutine(FakeDeath());
-            else
-                Die(hitDirection, hitPoint);
+            StartCoroutine(FakeDeath());
         }
         else
         {
-            animator.SetTrigger("hit_react");
+            Die(data.hitDirection, data.hitPoint);
         }
     }
 
+    private void ResetAttack() => alreadyAttacked = false;
     // ─────────────────────────────────────────────
     //  DEATH
     // ─────────────────────────────────────────────
@@ -310,7 +307,6 @@ public class EnemyController : MonoBehaviour, IDamageable
         {
             animator.enabled = false;
         }
-        TriggerDismemberment(hitDirection, hitPoint);
         Rigidbody rb = GetComponent<Rigidbody>();
         if (rb != null)
         {
@@ -324,27 +320,6 @@ public class EnemyController : MonoBehaviour, IDamageable
             rb.AddTorque(Random.insideUnitSphere * 1f, ForceMode.Impulse);
         }
         Invoke(nameof(DestroyEnemy), 10f);
-    }
-
-    private void TriggerDismemberment(Vector3 hitDirection, Vector3 hitPoint)
-    {
-        if (weaponProp != null)
-        {
-            DetachAndLaunchProp(weaponProp, hitDirection * 2f + Vector3.up * 2f, 5f);
-        }
-        if (shieldProp != null)
-        {
-            DetachAndLaunchProp(shieldProp, hitDirection * 2f + Vector3.up * 2f, 5f);
-        }
-
-        bool hitHeadZone = (headBone != null) && (hitPoint == default || hitPoint.y > (headBone.position.y - 0.65f));
-
-        if (hitHeadZone)
-        {
-            Decapitate(hitDirection);
-        }
-
-
     }
 
     private void DestroyEnemy() => Destroy(gameObject);
@@ -368,76 +343,6 @@ public class EnemyController : MonoBehaviour, IDamageable
         }
     }
 
-    private void Decapitate(Vector3 hitDirection)
-    {
-        // Detach helmet if present
-        if (helmetProp != null)
-        {
-            Vector3 launchVelocity = (hitDirection.normalized * 3f) + (Vector3.up * 1.5f);
-            DetachAndLaunchProp(helmetProp, launchVelocity, 6f);
-        }
-        if(chunkExplosionPrefab!=null && headBone!=null){
-            GameObject chunks = Instantiate(chunkExplosionPrefab,headBone.position, Quaternion.LookRotation(hitDirection.normalized));
-            Destroy(chunks, 1f);
-        }if(stumpBloodFountainPrefab!=null){
-            Transform stump = (headBone!=null && headBone.parent!=null)?headBone.parent:transform;
-            GameObject fountain = Instantiate(stumpBloodFountainPrefab, stump.position, Quaternion.LookRotation(stump.up), stump);
-            Destroy(fountain, 4f);
-        }
-        if (headBone != null)
-        {
-            headBone.localScale = Vector3.zero;
-        }
-    }
-
-    private void DetachAndLaunchProp(GameObject prop, Vector3 launchVelocity, float torqueForce)
-    {
-        if (prop == null) return;
-        SkinnedMeshRenderer smr = prop.GetComponent<SkinnedMeshRenderer>();
-        if (smr != null)
-        {
-            UnityEngine.Mesh bakedMesh = new UnityEngine.Mesh();
-            smr.BakeMesh(bakedMesh);
-            Material[] mats = smr.sharedMaterials;
-            Vector3 meshCenter = bakedMesh.bounds.center;
-            Vector3[] verts = bakedMesh.vertices;
-            for (int i = 0; i < verts.Length; i++)
-            {
-                verts[i] -= meshCenter;
-            }
-            bakedMesh.vertices = verts;
-            bakedMesh.RecalculateBounds();
-            bakedMesh.RecalculateNormals();
-
-            smr.enabled = false;
-            Destroy(smr);
-
-            MeshFilter mf = prop.AddComponent<MeshFilter>();
-            mf.sharedMesh = bakedMesh;
-
-            MeshRenderer mr = prop.AddComponent<MeshRenderer>();
-            mr.materials = mats;
-
-            prop.transform.position += prop.transform.TransformDirection(meshCenter);
-        }
-        prop.transform.SetParent(null);
-        Rigidbody rb = prop.GetComponent<Rigidbody>();
-        if (rb == null)
-        {
-            rb = prop.AddComponent<Rigidbody>();
-        }
-        rb.isKinematic = false;
-        rb.useGravity = true;
-        Collider col = prop.GetComponent<Collider>();
-        if (col == null)
-        {
-            BoxCollider box = prop.AddComponent<BoxCollider>();
-            box.size = new Vector3(0.3f, 0.3f, 0.3f);
-        }
-        rb.AddForce(launchVelocity, ForceMode.Impulse);
-        rb.AddTorque(Random.insideUnitSphere * torqueForce, ForceMode.Impulse);
-        Destroy(prop, 10f);
-    }
     // ─────────────────────────────────────────────
     //  COROUTINE: CREEPY STARE
     //  Enemy stops dead, turns to face player, does nothing.
@@ -503,7 +408,6 @@ public class EnemyController : MonoBehaviour, IDamageable
     private IEnumerator FakeDeath()
     {
         fakingDeath = true;
-        health = 1f; // survive on 1 hp
         agent.isStopped = true;
         animator.SetTrigger("knock_down");
 
@@ -514,7 +418,6 @@ public class EnemyController : MonoBehaviour, IDamageable
         // Only get back up if player is nearby
         if (Vector3.Distance(transform.position, player.position) < sightRange)
         {
-            health = 50f; // revive with partial HP
             fakingDeath = false;
             dead = false;
             agent.isStopped = false;
@@ -551,12 +454,11 @@ public class EnemyController : MonoBehaviour, IDamageable
     // ─────────────────────────────────────────────
     private void CheckLimping()
     {
-        if (health / 150f < 0.4f && !isLimping)
+        if (healthComponent != null && (healthComponent.CurrentHealth / healthComponent.MaxHealth) < 0.4f && !isLimping)
         {
             isLimping = true;
             chaseSpeed = Mathf.Max(chaseSpeed - 1.5f, 2f);
             agent.speed = chaseSpeed;
-            // Optionally set animator bool: animator.SetBool("isLimping", true);
         }
     }
 

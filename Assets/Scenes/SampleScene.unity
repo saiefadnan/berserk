@@ -987,6 +987,16 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!1 &168197149 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8656409841059492053, guid: bd6993564e475494d822ae5725305919, type: 3}
+  m_PrefabInstance: {fileID: 840225843}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &168197150 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3733332419014278382, guid: bd6993564e475494d822ae5725305919, type: 3}
+  m_PrefabInstance: {fileID: 840225843}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &181329399
 GameObject:
   m_ObjectHideFlags: 0
@@ -29874,6 +29884,11 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 377299078}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &389746963 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6479208790003174459, guid: d19f5073ba761de42b7b6dde31b574ce, type: 3}
+  m_PrefabInstance: {fileID: 6582401889917914498}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &397939044
 GameObject:
   m_ObjectHideFlags: 0
@@ -32301,7 +32316,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: bd6993564e475494d822ae5725305919, type: 3}
       propertyPath: m_Name
-      value: gemini_generated_video_9653519d
+      value: Alien
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -32310,6 +32325,15 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: bd6993564e475494d822ae5725305919, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2060485443}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: bd6993564e475494d822ae5725305919, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2060485446}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: bd6993564e475494d822ae5725305919, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2060485448}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: bd6993564e475494d822ae5725305919, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2060485447}
   m_SourcePrefab: {fileID: 100100000, guid: bd6993564e475494d822ae5725305919, type: 3}
 --- !u!1 &860938515
 GameObject:
@@ -32485,6 +32509,11 @@ Transform:
   - {fileID: 3621041822263056148}
   m_Father: {fileID: 917025078}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &871054846 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8333561053290946000, guid: bd6993564e475494d822ae5725305919, type: 3}
+  m_PrefabInstance: {fileID: 840225843}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &884080856
 GameObject:
   m_ObjectHideFlags: 0
@@ -36993,6 +37022,11 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!1 &2013295412 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -3145320664515157699, guid: bd6993564e475494d822ae5725305919, type: 3}
+  m_PrefabInstance: {fileID: 840225843}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &2019144617
 GameObject:
   m_ObjectHideFlags: 0
@@ -37335,6 +37369,74 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Health
   maxHealth: 100
   _surfaceType: 0
+--- !u!114 &2060485446
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2060485440}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f6eb540dad970c478a9d3632a5ab36d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DismembermentReceiver
+  headBone: {fileID: 168197150}
+  helmetProp: {fileID: 168197149}
+  weaponProp: {fileID: 2013295412}
+  shieldProp: {fileID: 871054846}
+  stumpBloodFountainPrefab: {fileID: 389746963}
+  chunkExplosionPrefab: {fileID: 1834194341294532, guid: d5f26854a8904624c8073139cd2eb346, type: 3}
+--- !u!54 &2060485447
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2060485440}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
+--- !u!136 &2060485448
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2060485440}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.5
+  m_Height: 1
+  m_Direction: 1
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &2062143573
 GameObject:
   m_ObjectHideFlags: 0
@@ -49801,6 +49903,8 @@ GameObject:
   - component: {fileID: 4537855894445148316}
   - component: {fileID: 4537855894445148318}
   - component: {fileID: 4537855894445148317}
+  - component: {fileID: 4537855894445148320}
+  - component: {fileID: 4537855894445148319}
   m_Layer: 0
   m_Name: enemy
   m_TagString: Enemy
@@ -49879,7 +49983,6 @@ MonoBehaviour:
   breathingClips:
   - {fileID: 8300000, guid: aff7fdad1ed746b4f9e3b2085f5dee4f, type: 3}
   bloodSplatter: {fileID: 2150424117374339484, guid: 5d52c9ef8af446e4abe3a71dcbdc2050, type: 3}
-  health: 250
   walkPointRange: 15
   sightRange: 10
   attackRange: 1.2
@@ -49889,12 +49992,6 @@ MonoBehaviour:
   patrolSpeed: 1.2
   chaseSpeed: 4.5
   chargeSpeed: 8
-  headBone: {fileID: 7196455058297684143}
-  helmetProp: {fileID: 9142606427988367475}
-  weaponProp: {fileID: 4372771790359036931}
-  shieldProp: {fileID: 2739918840481819296}
-  stumpBloodFountainPrefab: {fileID: 1962516439210982, guid: 3c657dedc43d33a4987fbf09e6363067, type: 3}
-  chunkExplosionPrefab: {fileID: 1834194341294532, guid: d5f26854a8904624c8073139cd2eb346, type: 3}
   stareChance: 0.15
   stareDuration: 2.5
   chargeChance: 0.2
@@ -50094,6 +50191,38 @@ CapsuleCollider:
   m_Height: 1
   m_Direction: 1
   m_Center: {x: -0.09, y: 0.54, z: 0.11}
+--- !u!114 &4537855894445148319
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4537855894445148310}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f6eb540dad970c478a9d3632a5ab36d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DismembermentReceiver
+  headBone: {fileID: 7196455058297684143}
+  helmetProp: {fileID: 9142606427988367475}
+  weaponProp: {fileID: 4372771790359036931}
+  shieldProp: {fileID: 2739918840481819296}
+  stumpBloodFountainPrefab: {fileID: 1962516439210982, guid: 3c657dedc43d33a4987fbf09e6363067, type: 3}
+  chunkExplosionPrefab: {fileID: 1834194341294532, guid: d5f26854a8904624c8073139cd2eb346, type: 3}
+--- !u!114 &4537855894445148320
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4537855894445148310}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 546fc47ba041073428632ba056512170, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Health
+  maxHealth: 100
+  _surfaceType: 0
 --- !u!1001 &4592373076977066651
 PrefabInstance:
   m_ObjectHideFlags: 0
