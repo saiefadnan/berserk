@@ -299,26 +299,12 @@ public class EnemyController : MonoBehaviour
     {
         dead = true;
         StopAllCoroutines();
-        if (agent != null)
-        {
-            agent.enabled = false;
-        }
-        if (animator != null)
-        {
-            animator.enabled = false;
-        }
-        Rigidbody rb = GetComponent<Rigidbody>();
-        if (rb != null)
-        {
-            rb.isKinematic = false;
-            rb.useGravity = true;
-
-            Vector3 forceDir = (hitDirection != default) ? hitDirection.normalized : -transform.forward;
-
-            Vector3 launchVelocity = forceDir * 6f + Vector3.up * 1f;
-            rb.AddForce(launchVelocity, ForceMode.Impulse);
-            rb.AddTorque(Random.insideUnitSphere * 1f, ForceMode.Impulse);
-        }
+        // Trigger ragdoll ONLY on actual death!
+            RagdollHandler ragdoll = GetComponent<RagdollHandler>();
+            if (ragdoll != null)
+            {
+                ragdoll.TriggerRagdoll(hitDirection);
+            }
         Invoke(nameof(DestroyEnemy), 10f);
     }
 

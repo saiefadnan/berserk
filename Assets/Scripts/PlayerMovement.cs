@@ -38,7 +38,7 @@ public class PlayerMovement : MonoBehaviour
     private EquipWeapon equipWeaponComponent;
     private GameObject swordHolder;
     private GameObject weapon;
-    
+
      [Header("Audio")]
     [SerializeField] private AudioSource footAudioSrc;
     [SerializeField] private AudioSource jumpAudioSrc;
@@ -54,8 +54,8 @@ public class PlayerMovement : MonoBehaviour
     {
         healthComponent = GetComponent<Health>();
         characterController = GetComponent<CharacterController>();
-        animator = GetComponentInChildren<Animator>();  
-        combat = GetComponent<PlayerCombat>();  
+        animator = GetComponentInChildren<Animator>();
+        combat = GetComponent<PlayerCombat>();
     }
 
     void Start()
@@ -83,7 +83,7 @@ public class PlayerMovement : MonoBehaviour
         float curSpeedY = canMove ? (isRunning ? runSpeed : walkSpeed) * Input.GetAxis("Horizontal") : 0;
         bool defaultState = baseState.IsName("idle");
         bool shoot = Input.GetMouseButton(1);
-    
+
         currentSpeed = Mathf.MoveTowards(currentSpeed, targetSpeed, 5f * Time.deltaTime);
         animator.SetFloat(SpeedParam, currentSpeed);
         moveDirection = baseState.IsName("equip") || combat.IsAttacking || combat.IsGuarding ? Vector3.zero : (forward * curSpeedX) + (right * curSpeedY);
@@ -124,12 +124,7 @@ public class PlayerMovement : MonoBehaviour
         }
 
         animator.SetBool(EqMovParam, moveDirection != Vector3.zero && (isRunning || isWalking) && combat.IsEquipped);
-
-
-        if (!characterController.isGrounded)
-        {
-            moveDirection.y -= gravity * Time.deltaTime;
-        }
+        moveDirection.y -= gravity * Time.deltaTime;
 
         //crouchSetup
         if (Input.GetKey(KeyCode.R) && canMove)
@@ -184,9 +179,10 @@ public class PlayerMovement : MonoBehaviour
     private void PlayFootStep(bool isRunning = false)
     {
         footAudioSrc.clip = footStep;
+        footAudioSrc.loop = true;
         footAudioSrc.Play();
         stepRunning = true;
-        footAudioSrc.pitch = isRunning ? 2.0f : 1.0f;
+        footAudioSrc.pitch = isRunning ? 1.6f : 1.0f;
     }
     private void StopFootStep()
     {
