@@ -421,6 +421,7 @@ public class EnemyController : MonoBehaviour
             fakingDeath = false;
             dead = false;
             agent.isStopped = false;
+            healthComponent.Revive(40);
             animator.SetTrigger("hit_react"); // "getting up" animation
             PlayRandomClip(screamClips);
         }

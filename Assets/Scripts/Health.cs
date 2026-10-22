@@ -66,4 +66,11 @@ public class Health: MonoBehaviour, IDamageable{
         currentHealth = Mathf.Min(maxHealth, currentHealth + amount);
         OnHealthChanged?.Invoke(currentHealth, maxHealth);
     }
+
+    public void Revive(float healthAmount)
+        {
+            isDead = false;
+            currentHealth = Mathf.Clamp(healthAmount, 1f, maxHealth);
+            OnHealthChanged?.Invoke(currentHealth, maxHealth);
+        }
 }
