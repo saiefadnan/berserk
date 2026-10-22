@@ -1,27 +1,85 @@
 using UnityEngine;
 using UnityEngine.UI;
-
+using System.Collections;
 
 public class HealthBar : MonoBehaviour
 {
-    public Slider HealthSlider;
-    public Slider EaseSlider;
-    public float MaxHealth = 100f;
-    public float CurrentHealth;
+
+    [Header("UI Sliders")]
+    public Slider healthSlider;
+    public Slider easeSlider;
     public float lerpSpeed = 0.05f;
 
-    void Start()
-    {
-        CurrentHealth = MaxHealth;
+    [Header("Target")]
+    [SerializeField] private Health targetHealth;
+
+    public float maxHealth;
+    public float currentHealth;
+    private Coroutine easeRoutine;
+    
+    private void Awake(){
+        if(targetHealth == null){
+            GameObject player = GameObject.Find("player_controller") ?? GameObject.FindWithTag("Player") ?? GameObject.Find("player");
+            if (player != null)
+            {
+                targetHealth = player.GetComponent<Health>() ?? player.GetComponentInChildren<Health>();    
+            }
+        }
     }
-    // Update is called once per frame
-    void Update()
+
+    private void OnEnable()
     {
-        if(HealthSlider.value!=CurrentHealth){
-            HealthSlider.value=CurrentHealth;
+        if (targetHealth != null)
+        {
+            targetHealth.OnHealthChanged += HandleHealthChanged;
         }
-        if(HealthSlider.value!=EaseSlider.value){
-           EaseSlider.value=Mathf.Lerp(EaseSlider.value,CurrentHealth,lerpSpeed);
+    }
+
+    private void OnDisable()
+    {
+        if (targetHealth != null)
+        {
+            targetHealth.OnHealthChanged -= HandleHealthChanged;
         }
+    }
+
+    private void Start()
+    {
+        if (targetHealth != null)
+        {
+            HandleHealthChanged(targetHealth.CurrentHealth, targetHealth.MaxHealth); // Initial sync on boot
+        }
+    }
+    
+
+    private void HandleHealthChanged(float current, float max)
+    {
+        currentHealth = current;
+        maxHealth = max;
+
+        if (healthSlider != null)
+        {
+            healthSlider.maxValue = max;
+            healthSlider.value = current;
+        }
+
+        if (easeSlider != null)
+        {
+            easeSlider.maxValue = max;
+        }
+
+        if(easeRoutine!=null) StopCoroutine(easeRoutine);
+        easeRoutine = StartCoroutine(SmoothEaseBar());
+    }
+
+    private IEnumerator SmoothEaseBar()
+    {
+        while (Mathf.Abs(easeSlider.value - currentHealth) > 0.01f)
+        {
+            easeSlider.value = Mathf.Lerp(easeSlider.value, currentHealth, lerpSpeed);
+            yield return null;
+        }
+        easeSlider.value = currentHealth;
+        easeRoutine = null;
     }
 }

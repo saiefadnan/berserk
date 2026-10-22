@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(CharacterController))]
-public class PlayerMovement : MonoBehaviour, IDamageable
+public class PlayerMovement : MonoBehaviour
 {
     public Camera playerCamera;
     public GameObject figure;
-    public float health = 100f;
+    private Health healthComponent;
+
     public float jumpPower = 7f;
     public float gravity = 10f;
     public float lookSpeed = 2f;
@@ -70,6 +71,23 @@ public class PlayerMovement : MonoBehaviour, IDamageable
     private static readonly int IsGuardingParam = Animator.StringToHash("isGuarding");
     private static readonly int GuardHitParam = Animator.StringToHash("guardHit");
 
+    private void Awake()
+    {
+        healthComponent = GetComponent<Health>();
+        if (healthComponent != null)
+        {
+            healthComponent.OnDamaged += OnPlayerDamaged;
+        }     
+    }
+
+    private void OnDestroy()
+    {
+        if (healthComponent != null)
+        {
+            healthComponent.OnDamaged -= OnPlayerDamaged;
+        }
+    }
+
     void Start()
     {
         characterController = GetComponent<CharacterController>();
@@ -116,6 +134,7 @@ public class PlayerMovement : MonoBehaviour, IDamageable
             {
                 isDodging = false;
                 isInvulnerable = false;
+                if (healthComponent != null) healthComponent.isInvulnerable = false;
             }
         }
 
@@ -123,6 +142,7 @@ public class PlayerMovement : MonoBehaviour, IDamageable
         {
             isDodging = true;
             isInvulnerable = true;
+            if (healthComponent != null) healthComponent.isInvulnerable = true;
             dodgeTimer = dodgeDuration;
             dodgeCooldownTimer = dodgeCooldown;
             animator.SetTrigger(DodgeParam);
@@ -146,12 +166,17 @@ public class PlayerMovement : MonoBehaviour, IDamageable
             animator.ResetTrigger(Attack3Param);
         }
         isGuarding = equip && Input.GetMouseButton(1) && !isDodging && !attackAnimPlaying;
+        if (healthComponent != null)
+        {
+            healthComponent.damageReductionPercent = isGuarding ? 0.85f : 0f;
+        }
         animator.SetBool(IsGuardingParam, isGuarding);
         if (equipWeaponComponent != null)
         {
             equipWeaponComponent.SetGuarding(isGuarding);
             equipWeaponComponent.SetAttacking(attackAnimPlaying);
         }
+        animator.SetLayerWeight(1, (attackAnimPlaying || isGuarding || isDodging) ? 0f : 1f);
         animator.SetBool(ShootParam, shoot && !equip);
         moveDirection = stateInfo.IsName("equip") || attackAnimPlaying || isGuarding ? Vector3.zero : (forward * curSpeedX) + (right * curSpeedY);
 
@@ -320,7 +345,7 @@ public class PlayerMovement : MonoBehaviour, IDamageable
             }
         }
         else
-        {
+        { 
             characterController.Move(moveDirection * Time.deltaTime);
         }
 
@@ -338,28 +363,12 @@ public class PlayerMovement : MonoBehaviour, IDamageable
 
     }
 
-    public SurfaceType surfaceType => SurfaceType.Flesh;
-    public GameObject victim => gameObject;
-
-    public void TakeDamage(DamageData data){
-        TakeDamage(data.amount);
-    }
-
-    public void TakeDamage(int damage)
-    {
-        if (isInvulnerable)
-        {
-            Debug.Log("<color=cyan>DODGED! (i-Frames protected Guts)</color>");
-            return;
-        }
+    private void OnPlayerDamaged(DamageData data){
         if (isGuarding)
         {
             animator.SetTrigger(GuardHitParam);
-            Debug.Log("<color=yellow>BLOCKED! (Dragonslayer absorbed the blow)</color>");
-            health -= damage * 0.15f;
-            return;
+            Debug.Log("<color=yellow>[Combat] BLOCKED! (Dragonslayer absorbed 85% of damage)</color>");     
         }
-        health -= damage;
     }
 
     private void PlayJumpSound()

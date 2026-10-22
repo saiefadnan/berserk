@@ -166,6 +166,7 @@ GameObject:
   - component: {fileID: 35385139}
   - component: {fileID: 35385142}
   - component: {fileID: 35385143}
+  - component: {fileID: 35385144}
   m_Layer: 0
   m_Name: player_controller
   m_TagString: Untagged
@@ -187,7 +188,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerCamera: {fileID: 638760646}
   figure: {fileID: 190267466}
-  health: 100
   jumpPower: 7
   gravity: 10
   lookSpeed: 2
@@ -441,6 +441,20 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &35385144
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 35385138}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 546fc47ba041073428632ba056512170, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Health
+  maxHealth: 100
+  _surfaceType: 0
 --- !u!1 &36536360
 GameObject:
   m_ObjectHideFlags: 0
@@ -950,11 +964,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 29cc672b7644a204380cc939877b5ac0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HealthBar
-  HealthSlider: {fileID: 1376813728}
-  EaseSlider: {fileID: 2098059437}
-  MaxHealth: 100
-  CurrentHealth: 0
+  healthSlider: {fileID: 1376813728}
+  easeSlider: {fileID: 2098059437}
   lerpSpeed: 0.05
+  targetHealth: {fileID: 35385144}
+  maxHealth: 0
+  currentHealth: 0
 --- !u!1 &167133274
 GameObject:
   m_ObjectHideFlags: 0
@@ -32291,7 +32306,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: bd6993564e475494d822ae5725305919, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2060485443}
   m_SourcePrefab: {fileID: 100100000, guid: bd6993564e475494d822ae5725305919, type: 3}
 --- !u!1 &860938515
 GameObject:
@@ -37298,6 +37316,25 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!1 &2060485440 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: bd6993564e475494d822ae5725305919, type: 3}
+  m_PrefabInstance: {fileID: 840225843}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2060485443
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2060485440}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 546fc47ba041073428632ba056512170, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Health
+  maxHealth: 100
+  _surfaceType: 0
 --- !u!1 &2062143573
 GameObject:
   m_ObjectHideFlags: 0
@@ -51483,7 +51520,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8327843074894606977, guid: 8ce21e5215bc6d74eabac4873f810a05, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8445618150893761113, guid: 8ce21e5215bc6d74eabac4873f810a05, type: 3}
       propertyPath: m_LocalPosition.x

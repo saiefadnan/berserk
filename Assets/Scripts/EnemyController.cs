@@ -240,7 +240,8 @@ public class EnemyController : MonoBehaviour, IDamageable
 
             // Deal random damage to the player
             int dmg = Random.Range(minDamage, maxDamage + 1);
-            if(player.TryGetComponent(out IDamageable target))
+            IDamageable target = player.GetComponentInParent<IDamageable>() ?? player.GetComponent<IDamageable>();
+            if(target!=null)
             {
                 DamageData data = new DamageData
                 {
