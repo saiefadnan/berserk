@@ -4,9 +4,9 @@ using UnityEngine;
 public class DismembermentReceiver : MonoBehaviour{
     [Header("Bones & Props")]
     [SerializeField] private Transform headBone;        //
-    [SerializeField] private GameObject helmetProp;     // Paladin_J_Nordstrom_Helmet(if equipped)
-    [SerializeField] private GameObject weaponProp;
-    [SerializeField] private GameObject shieldProp;
+    [SerializeField] private GameObject helmetProp;    // Paladin_J_Nordstrom_Helmet(if equipped)
+    [SerializeField] private GameObject[] limbProps;
+
 
     [Header("VFX Prefabs")]
     [SerializeField] private GameObject stumpBloodFountainPrefab;
@@ -47,13 +47,11 @@ public class DismembermentReceiver : MonoBehaviour{
 
     private void TriggerDismemberment(Vector3 hitDirection, Vector3 hitPoint)
     {
-        if (weaponProp != null)
-        {
-            DetachAndLaunchProp(weaponProp, hitDirection * 2f + Vector3.up * 2f, 5f);
-        }
-        if (shieldProp != null)
-        {
-            DetachAndLaunchProp(shieldProp, hitDirection * 2f + Vector3.up * 2f, 5f);
+        foreach(GameObject limbProp in limbProps){
+            if (limbProp != null)
+            {
+                DetachAndLaunchProp(limbProp, hitDirection * 2f + Vector3.up * 2f, 5f);
+            }
         }
 
         bool hitHeadZone = (headBone != null) && (hitPoint == default || hitPoint.y > (headBone.position.y - 0.65f));
