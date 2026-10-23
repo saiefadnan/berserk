@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class Sword : MonoBehaviour
 {
-    public int damage = 10;
+    public float damage = 10f;
     public ParticleSystem slashEffect;
     [SerializeField] private GameObject flashEffectPrefab;
     [SerializeField] private GameObject bloodEffectPrefab;
@@ -32,7 +32,7 @@ public class Sword : MonoBehaviour
                 Vector3 hitPoint = other.ClosestPoint(transform.position);
                 Vector3 hitNormal = (hitPoint - transform.position).normalized;
 
-                
+
                 if(damageable.surfaceType == SurfaceType.Flesh){
                     PlayBloodSplatter(hitPoint, hitNormal, other.transform);
                     // Guts Combat Juice: Micro-hitstop & heavy impact camera shake
@@ -40,7 +40,7 @@ public class Sword : MonoBehaviour
                     TriggerHitStop(0.07f, enemyAnim);
                 }
 
-                PlaySparkFlash(transform.position, other.transform.position);                
+                PlaySparkFlash(transform.position, other.transform.position);
                 PlayHitAudio();
                 Vector3 slashDirection = transform.forward;
                 DamageData data = new DamageData

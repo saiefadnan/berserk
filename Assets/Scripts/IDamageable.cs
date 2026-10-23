@@ -1,7 +1,7 @@
 using UnityEngine;
 
 public struct DamageData {
-    public int amount;
+    public float amount;
     public Vector3 hitPoint;
     public Vector3 hitDirection;
     public GameObject attacker;

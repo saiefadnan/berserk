@@ -32,8 +32,8 @@ public class EnemyController : MonoBehaviour
     public float timeBetweenAttacks = 1.4f;
 
     [Header("Damage")]
-    public int minDamage = 10;
-    public int maxDamage = 25;         // random per swing — unpredictable!
+    public float minDamage = 10f;
+    public float maxDamage = 25f;         // random per swing — unpredictable!
 
     [Header("Speed")]
     public float patrolSpeed = 1.2f;
@@ -226,7 +226,7 @@ public class EnemyController : MonoBehaviour
             animator.SetTrigger("attack");
 
             // Deal random damage to the player
-            int dmg = Random.Range(minDamage, maxDamage + 1);
+            float dmg = Random.Range(minDamage, maxDamage + 1);
             IDamageable target = player.GetComponentInParent<IDamageable>() ?? player.GetComponent<IDamageable>();
             if(target!=null)
             {

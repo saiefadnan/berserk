@@ -6,14 +6,14 @@ public class ArrowHit : MonoBehaviour
     private bool hit=false;
     private Transform hitArea;
     public GameObject bloodVfx;
-    
+
     void OnCollisionEnter(Collision obj){
         if(hit)return;
         hit=true;
         rb.linearVelocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
         IDamageable damageable = obj.gameObject.GetComponent<IDamageable>() ?? obj.gameObject.GetComponentInParent<IDamageable>();
-        
+
         rb.isKinematic = true;
         if (obj.contactCount > 0)
         {
@@ -21,7 +21,7 @@ public class ArrowHit : MonoBehaviour
         }
 
         if(damageable==null || damageable.victim == transform.root.gameObject) return;
-            
+
             if(damageable.surfaceType == SurfaceType.Flesh && bloodVfx!=null) {
                 Vector3 pos = obj.contacts[0].point + obj.contacts[0].normal * 0.02f;
                 Quaternion rotation = Quaternion.LookRotation(obj.contacts[0].normal);
@@ -34,7 +34,7 @@ public class ArrowHit : MonoBehaviour
 
             DamageData data = new DamageData
             {
-                amount = 20,
+                amount = 20f,
                 hitDirection = transform.forward,
                 hitPoint = obj.contacts[0].point,
                 attacker = gameObject

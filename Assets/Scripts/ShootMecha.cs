@@ -4,61 +4,134 @@ using UnityEngine.Animations.Rigging;
 
 public class ShootMecha : MonoBehaviour
 {
+    [Header("Camera Zoom Settings")]
     [SerializeField] private  float normalFOV;
     [SerializeField] private  float zoomFOV;
     [SerializeField] private  float zoomSpeed;
     [SerializeField] private  Vector3 normalPos;
     [SerializeField] private  Vector3 zoomPos;
-    [SerializeField] private  Camera camera;
-    [SerializeField] private  float arrowSpeed;
+    [SerializeField] private  Camera playerCamera;
+
+
+    [Header("Cannon Blast & Recoil")]
+    [SerializeField] private  float projectileSpeed = 40f;
+    [SerializeField] private float recoilKick = 1.2f;
+    [SerializeField] private float fireCooldown = 2.0f;
+    [SerializeField] private GameObject muzzleFlashVfx;
+
+    [Header("Audio & Targeting")]
     [SerializeField] private  AudioSource audioSource;
     [SerializeField] private  AudioClip shotAudio;
     [SerializeField] private  GameObject Target;
     [SerializeField] private  Rig AimRig;
 
+
+    [Header("Projectile & Trajectory")]
     public GameObject bullets;
-    private bool isAiming, fire, isAimActive;
     public Transform bulletEmitter;
     public LineRenderer trajectoryLine;
-    public float drag;
-    public float increment;
-    public int maxpoints;
-    public float rayOverlap;
-    public Vector3 nextPosition;
+    public float drag = 0.05f;
+    public float increment = 0.05f;
+    public int maxpoints = 30;
+    public float rayOverlap = 1.1f;
 
+    private bool isAiming;
+    private bool isAimActive;
+    private float cooldownTimer = 0f;
+    public Vector3 nextPosition;
+    private CharacterController playerController;
+
+
+    private void Awake()
+    {
+        playerController = GetComponentInParent<CharacterController>();
+        if (playerCamera == null) playerCamera = Camera.main;
+    }
 
     // Update is called once per frame
     void Update()
     {
+
+        if (cooldownTimer > 0f)
+        {
+            cooldownTimer -= Time.deltaTime;
+        }
+
         //aim setup
         isAiming = Input.GetMouseButton(1);
-        fire = Input.GetMouseButtonDown(0);
+        bool fire = Input.GetMouseButtonDown(0);
         isAimActive = Target.activeInHierarchy;
-        AimRig.weight = isAiming ? 1f : 0f;
+        if (AimRig != null) AimRig.weight = isAiming ? 1f : 0f;
+
         Ray ray = new Ray(bulletEmitter.position, (MouseTarget.Instance.GetHitPoint() - bulletEmitter.position).normalized);
         PredictTrajectory(ray);
 
-        if (isAiming && fire && isAimActive)
+        if (isAiming && fire && isAimActive && cooldownTimer <= 0f)
         {
-            GameObject bullet = Instantiate(bullets, bulletEmitter.position, Quaternion.LookRotation(ray.direction));
-            Rigidbody rb = bullet.GetComponent<Rigidbody>();
-            rb.linearVelocity = ray.direction * arrowSpeed;
-            audioSource.PlayOneShot(shotAudio);
+            FireCannon(ray);
+        }
+
+        //camera Smooth Zoom
+        if(playerCamera != null){
+            float targetFOV = isAiming ? zoomFOV : normalFOV;
+            playerCamera.fieldOfView = Mathf.Lerp(playerCamera.fieldOfView, targetFOV, Time.deltaTime * zoomSpeed);
+            Vector3 targetPos = isAiming ? zoomPos : normalPos;
+            playerCamera.transform.localPosition = Vector3.Lerp(playerCamera.transform.localPosition, targetPos,Time.deltaTime * zoomSpeed);
+        }
+    }
+
+    private void FireCannon(Ray ray){
+
+        cooldownTimer = fireCooldown;
+
+        GameObject bullet = Instantiate(bullets, bulletEmitter.position, Quaternion.LookRotation(ray.direction));
+        Rigidbody rb = bullet.GetComponent<Rigidbody>();
+
+        if(rb != null){
+            rb.linearVelocity = ray.direction * projectileSpeed;
+
             Destroy(bullet, 10f);
         }
-        //camera setup
-        float targetFOV = isAiming ? zoomFOV : normalFOV;
-        camera.fieldOfView = Mathf.Lerp(camera.fieldOfView, targetFOV, Time.deltaTime * zoomSpeed);
-        Vector3 targetPos = isAiming ? zoomPos : normalPos;
-        camera.transform.localPosition = Vector3.Lerp(camera.transform.localPosition, targetPos, Time.deltaTime * zoomSpeed);
+
+        CannonBall cannonBall = bullet.GetComponent<CannonBall>();
+        if (cannonBall != null)
+        {
+            cannonBall.owner = transform.root.gameObject;
+        }
+
+        if (muzzleFlashVfx != null)
+        {
+            GameObject flash = Instantiate(muzzleFlashVfx, bulletEmitter.position, Quaternion.LookRotation(ray.direction));
+            flash.transform.localScale = Vector3.one * 1.8f;
+            Destroy(flash, 2.5f);
+        }
+
+        if (audioSource != null && shotAudio != null)
+        {
+            audioSource.PlayOneShot(shotAudio);
+        }
+
+        if (CameraShake.Instance != null)
+        {
+            CameraShake.Instance.Shake(0.25f, 0.35f);
+        }
+
+        if (playerController != null)
+        {
+            Vector3 recoilDir = -transform.root.forward;
+            playerController.Move(recoilDir * recoilKick);
+        }
     }
 
     private void PredictTrajectory(Ray ray)
     {
-        Vector3 velocity = arrowSpeed * ray.direction;
-        Vector3 position = ray.origin;
+        if (trajectoryLine == null) return;
         trajectoryLine.enabled = isAiming && isAimActive;
+
         if(!(isAiming && isAimActive)) return;
+
+        Vector3 velocity = projectileSpeed * ray.direction;
+        Vector3 position = ray.origin;
         trajectoryLine.positionCount = maxpoints;
         trajectoryLine.SetPosition(0, position);
         int pointIndex = 1;
@@ -66,9 +139,9 @@ public class ShootMecha : MonoBehaviour
         for (int i = 0; i + 1 < maxpoints; i++)
         {
             velocity = CalculateNewVelocity(velocity, drag, increment);
-            nextPosition = position + velocity * increment;
+            Vector3 nextPos = position + velocity * increment;
 
-            float overlap = Vector3.Distance(position, nextPosition) * rayOverlap;
+            float overlap = Vector3.Distance(position, nextPos) * rayOverlap;
             if (Physics.Raycast(position, velocity.normalized, out RaycastHit hit, overlap))
             {
                 trajectoryLine.positionCount = pointIndex + 1;
@@ -76,7 +149,7 @@ public class ShootMecha : MonoBehaviour
                 return;
             }
 
-            position = nextPosition;
+            position = nextPos;
             trajectoryLine.SetPosition(pointIndex++, position);
         }
     }
