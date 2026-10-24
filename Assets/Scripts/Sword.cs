@@ -23,39 +23,49 @@ public class Sword : MonoBehaviour
     // In Inspector: check "Is Trigger" on the Box Collider
     private void OnTriggerEnter(Collider other)
     {
-            if (cool)
+        if (cool)
+        {
+            IDamageable damageable = other.GetComponent<IDamageable>() ?? other.GetComponentInParent<IDamageable>();
+            if (damageable == null || damageable.victim == transform.root.gameObject) return;
+
+            // No ContactPoint available with triggers, use transform instead
+            Vector3 hitPoint = other.ClosestPoint(transform.position);
+            Vector3 hitNormal = (hitPoint - transform.position).normalized;
+
+            if (damageable.surfaceType == SurfaceType.Flesh)
             {
-                IDamageable damageable = other.GetComponent<IDamageable>() ?? other.GetComponentInParent<IDamageable>();
-                if (damageable == null || damageable.victim == transform.root.gameObject) return;
+                PlayBloodSplatter(hitPoint, hitNormal, other.transform);
+                // Guts Combat Juice: Micro-hitstop & heavy impact camera shake
+                Animator enemyAnim = other.GetComponentInChildren<Animator>();
+                TriggerHitStop(0.07f, enemyAnim);
+            }
 
-                // No ContactPoint available with triggers, use transform instead
-                Vector3 hitPoint = other.ClosestPoint(transform.position);
-                Vector3 hitNormal = (hitPoint - transform.position).normalized;
+            PlaySparkFlash(transform.position, other.transform.position);
+            PlayHitAudio();
+            Vector3 slashDirection = transform.forward;
 
+            float finalDamage = damage;
+            BeastOfDarkness beast = transform.root.GetComponent<BeastOfDarkness>();
+            if(beast != null && beast.IsActive){
+                finalDamage *= beast.DamageMultiplier;
+            }
+            else if(beast != null){
+                beast.AddRage(8f);
+            }
 
-                if(damageable.surfaceType == SurfaceType.Flesh){
-                    PlayBloodSplatter(hitPoint, hitNormal, other.transform);
-                    // Guts Combat Juice: Micro-hitstop & heavy impact camera shake
-                    Animator enemyAnim = other.GetComponentInChildren<Animator>();
-                    TriggerHitStop(0.07f, enemyAnim);
-                }
+            DamageData data = new DamageData
+            {
+                amount = finalDamage,
+                hitDirection = slashDirection,
+                hitPoint = hitPoint,
+                attacker = transform.root.gameObject
+            };
 
-                PlaySparkFlash(transform.position, other.transform.position);
-                PlayHitAudio();
-                Vector3 slashDirection = transform.forward;
-                DamageData data = new DamageData
-                {
-                    amount = damage,
-                    hitDirection = slashDirection,
-                    hitPoint = hitPoint,
-                    attacker = transform.root.gameObject
-                };
-
-                damageable.TakeDamage(data);
-                if (CameraShake.Instance != null)
-                {
-                    CameraShake.Instance.Shake(0.16f, 0.20f);
-                }
+            damageable.TakeDamage(data);
+            if (CameraShake.Instance != null)
+            {
+                CameraShake.Instance.Shake(0.16f, 0.20f);
+            }
         }
     }
 
@@ -70,7 +80,10 @@ public class Sword : MonoBehaviour
         if (animator != null) animator.speed = 0.0f;
         if (enemyAnimator != null) enemyAnimator.speed = 0.0f;
         yield return new WaitForSecondsRealtime(duration);
-        if (animator != null) animator.speed = 1.0f;
+        BeastOfDarkness beast = transform.root.GetComponent<BeastOfDarkness>();
+        float resumeSpeed = (beast != null && beast.IsActive) ?
+            beast.AttackSpeedMultiplier : 1.0f;
+        if (animator != null) animator.speed = resumeSpeed ;
         if (enemyAnimator != null) enemyAnimator.speed = 1.0f;
         hitStopCoroutine = null;
     }
@@ -87,6 +100,12 @@ public class Sword : MonoBehaviour
             );
             Destroy(effect, 2f);
         }
+    }
+
+    public void AudioSlash()
+    {
+        // if (audioSource != null && slashSound != null)
+        //     audioSource.PlayOneShot(slashSound);
     }
 
     public void PlayHitAudio()
@@ -109,11 +128,6 @@ public class Sword : MonoBehaviour
         if (swordTrail != null) swordTrail.emitting = false;
     }
 
-    public void AudioSlash()
-    {
-        // if (audioSource != null && slashSound != null)
-        //     audioSource.PlayOneShot(slashSound);
-    }
 
     public void AnimateSlash()
     {
