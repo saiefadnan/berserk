@@ -1,8 +1,8 @@
 using UnityEngine;
 
 [RequireComponent(typeof(Health))]
-public class DismembermentReceiver : MonoBehaviour{
-    [Header("Bones")]
+public class DismembermentReceiver : MonoBehaviour
+{
     [Header("Bones (Auto-discovered if left empty)")]
     [SerializeField] private Transform headBone;
     [SerializeField] private Transform leftArmBone;
@@ -16,7 +16,6 @@ public class DismembermentReceiver : MonoBehaviour{
     [SerializeField] private GameObject weaponProp;
     [SerializeField] private GameObject[] extraProps;
 
-
     [Header("VFX Prefabs")]
     [SerializeField] private GameObject stumpBloodFountainPrefab;
     [SerializeField] private GameObject chunkExplosionPrefab;
@@ -24,12 +23,14 @@ public class DismembermentReceiver : MonoBehaviour{
     private Health healthComponent;
     private Animator animator;
 
-    private void Awake(){
+    private void Awake()
+    {
         healthComponent = GetComponent<Health>();
         animator = GetComponentInChildren<Animator>();
 
-        if(animator!=null && animator.isHuman){
-            headBone = animator.GetBoneTransform(HumanBodyBones.Head);
+        if (animator != null && animator.isHuman)
+        {
+            if (headBone == null) headBone = animator.GetBoneTransform(HumanBodyBones.Head);
             if (leftArmBone == null) leftArmBone = animator.GetBoneTransform(HumanBodyBones.LeftUpperArm);
             if (rightArmBone == null) rightArmBone = animator.GetBoneTransform(HumanBodyBones.RightUpperArm);
             if (leftFootBone == null) leftFootBone = animator.GetBoneTransform(HumanBodyBones.LeftFoot);
@@ -61,92 +62,91 @@ public class DismembermentReceiver : MonoBehaviour{
     private void TriggerDismemberment(Vector3 hitDirection, Vector3 hitPoint)
     {
         float headDist = (headBone != null && hitPoint != default) ? Vector3.Distance(hitPoint, headBone.position) : float.MaxValue;
-        float leftArmDist = (leftArmBone != null && hitPoint != default) ? Vector3.Distance(hitPoint,leftArmBone.position) : float.MaxValue;
-        float rightArmDist = (rightArmBone != null && hitPoint != default) ? Vector3.Distance(hitPoint,rightArmBone.position) : float.MaxValue;
-        float leftFootDist = (leftFootBone != null && hitPoint != default) ? Vector3.Distance(hitPoint,leftFootBone.position) : float.MaxValue;
-        float rightFootDist = (rightFootBone != null && hitPoint != default) ? Vector3.Distance(hitPoint,rightFootBone.position) : float.MaxValue;
+        float leftArmDist = (leftArmBone != null && hitPoint != default) ? Vector3.Distance(hitPoint, leftArmBone.position) : float.MaxValue;
+        float rightArmDist = (rightArmBone != null && hitPoint != default) ? Vector3.Distance(hitPoint, rightArmBone.position) : float.MaxValue;
+        float leftFootDist = (leftFootBone != null && hitPoint != default) ? Vector3.Distance(hitPoint, leftFootBone.position) : float.MaxValue;
+        float rightFootDist = (rightFootBone != null && hitPoint != default) ? Vector3.Distance(hitPoint, rightFootBone.position) : float.MaxValue;
 
         bool hitHeadZone = (headBone != null) && (hitPoint == default || hitPoint.y > (headBone.position.y - 0.55f) || (headDist < leftArmDist && headDist < rightArmDist && headDist < 0.6f));
         bool hitLeftArm = !hitHeadZone && (leftArmBone != null) && (leftArmDist <= rightArmDist) && (leftArmDist < 1.1f);
         bool hitRightArm = !hitHeadZone && !hitLeftArm && (rightArmBone != null) && (rightArmDist < 1.1f);
 
         if (hitHeadZone)
-            {
-                Decapitate(hitDirection);
-                DropEquipment(hitDirection * 0.5f);
-            }
-            else if (hitLeftArm)
-            {
-                SeverLimb(leftArmBone, shieldProp, hitDirection);
-                if (weaponProp != null) DetachAndLaunchProp(weaponProp, hitDirection * 0.5f + Vector3.up * 1f,3f);
-            }
-            else if (hitRightArm)
-            {
-                SeverLimb(rightArmBone, weaponProp, hitDirection);
-                if (shieldProp != null) DetachAndLaunchProp(shieldProp, hitDirection * 0.5f + Vector3.up * 1f,3f);
-            }
-            else
-            {
-                // Center body cleave: drop equipment
-                DropEquipment(hitDirection);
-            }
+        {
+            Decapitate(hitDirection);
+            DropEquipment(hitDirection * 0.5f);
+        }
+        else if (hitLeftArm)
+        {
+            SeverLimb(leftArmBone, shieldProp, hitDirection);
+            if (weaponProp != null && weaponProp != rightArmBone?.gameObject) DetachAndLaunchProp(weaponProp, hitDirection * 0.5f + Vector3.up * 1f, 3f);
+        }
+        else if (hitRightArm)
+        {
+            SeverLimb(rightArmBone, weaponProp, hitDirection);
+            if (shieldProp != null && shieldProp != leftArmBone?.gameObject) DetachAndLaunchProp(shieldProp, hitDirection * 0.5f + Vector3.up * 1f, 3f);
+        }
+        else
+        {
+            // Center body cleave: drop equipment
+            DropEquipment(hitDirection);
+        }
 
         // Launch any extra armor props
-            if (extraProps != null)
+        if (extraProps != null)
+        {
+            foreach (GameObject prop in extraProps)
             {
-                foreach (GameObject prop in extraProps)
-                {
-                    if (prop != null) DetachAndLaunchProp(prop, hitDirection * 1.5f + Vector3.up * 1.5f, 4f);
-                }
+                if (prop != null) DetachAndLaunchProp(prop, hitDirection * 1.5f + Vector3.up * 1.5f, 4f);
             }
+        }
     }
 
-
     private void SpawnGoreVFX(Transform bone, Vector3 hitDirection)
+    {
+        if (bone == null) return;
+
+        if (chunkExplosionPrefab != null)
         {
-            if (bone == null) return;
-
-            if (chunkExplosionPrefab != null)
-            {
-                GameObject chunks = Instantiate(chunkExplosionPrefab, bone.position, Quaternion.LookRotation(hitDirection.normalized));
-                Destroy(chunks, 1f);
-            }
-
-            if (stumpBloodFountainPrefab != null)
-            {
-                Transform stump = (bone.parent != null) ? bone.parent : transform;
-                GameObject fountain = Instantiate(stumpBloodFountainPrefab, bone.position, Quaternion.LookRotation(bone.forward), stump);
-                Destroy(fountain, 4f);
-            }
+            GameObject chunks = Instantiate(chunkExplosionPrefab, bone.position, Quaternion.LookRotation(hitDirection.normalized));
+            Destroy(chunks, 1f);
         }
 
-     private void SeverLimb(Transform limbBone, GameObject attachedProp, Vector3 hitDirection)
+        if (stumpBloodFountainPrefab != null)
         {
-            if (limbBone == null) return;
-
-            // Pop the shield/sword off the severed arm
-            if (attachedProp != null)
-            {
-                Vector3 launchVelocity = (hitDirection.normalized * 3f) + (Vector3.up * 1.5f);
-                DetachAndLaunchProp(attachedProp, launchVelocity, 6f);
-            }
-
-            SpawnGoreVFX(limbBone, hitDirection);
-
-            // Cleanly shrink the arm bone (and its forearm/hand children) to zero
-            limbBone.localScale = Vector3.zero;
+            Transform stump = (bone.parent != null) ? bone.parent : transform;
+            GameObject fountain = Instantiate(stumpBloodFountainPrefab, bone.position, Quaternion.LookRotation(bone.forward), stump);
+            Destroy(fountain, 4f);
         }
+    }
+
+    private void SeverLimb(Transform limbBone, GameObject attachedProp, Vector3 hitDirection)
+    {
+        if (limbBone == null) return;
+
+        // Pop the shield/sword off the severed arm (guard against skeleton bone)
+        if (attachedProp != null && attachedProp != limbBone.gameObject)
+        {
+            Vector3 launchVelocity = (hitDirection.normalized * 3f) + (Vector3.up * 1.5f);
+            DetachAndLaunchProp(attachedProp, launchVelocity, 6f);
+        }
+
+        SpawnGoreVFX(limbBone, hitDirection);
+
+        // Cleanly shrink the arm bone (and its forearm/hand children) to zero
+        limbBone.localScale = Vector3.zero;
+    }
 
     private void DropEquipment(Vector3 hitDirection)
-        {
-            if (shieldProp != null) DetachAndLaunchProp(shieldProp, hitDirection * 1.5f + Vector3.up * 1.5f, 4f);
-            if (weaponProp != null) DetachAndLaunchProp(weaponProp, hitDirection * 1.5f + Vector3.up * 1.5f, 4f);
-        }
+    {
+        if (shieldProp != null && shieldProp != leftArmBone?.gameObject) DetachAndLaunchProp(shieldProp, hitDirection * 1.5f + Vector3.up * 1.5f, 4f);
+        if (weaponProp != null && weaponProp != rightArmBone?.gameObject) DetachAndLaunchProp(weaponProp, hitDirection * 1.5f + Vector3.up * 1.5f, 4f);
+    }
 
     private void Decapitate(Vector3 hitDirection)
     {
-        // Detach helmet if present
-        if (helmetProp != null)
+        // Detach helmet if present (guard against skeleton bone)
+        if (helmetProp != null && helmetProp != headBone?.gameObject)
         {
             Vector3 launchVelocity = (hitDirection.normalized * 3f) + (Vector3.up * 1.5f);
             DetachAndLaunchProp(helmetProp, launchVelocity, 6f);
@@ -206,5 +206,4 @@ public class DismembermentReceiver : MonoBehaviour{
         rb.AddTorque(Random.insideUnitSphere * torqueForce, ForceMode.Impulse);
         Destroy(prop, 10f);
     }
-
 }

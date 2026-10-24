@@ -15,7 +15,6 @@ public class CannonBall : MonoBehaviour {
     [SerializeField] private AudioClip explosionAudio;
     [SerializeField] private float lifetime = 5f;
 
-
     [HideInInspector] public GameObject owner;
 
     private Rigidbody rb;
@@ -56,7 +55,8 @@ public class CannonBall : MonoBehaviour {
         HashSet<GameObject> hitVictims = new HashSet<GameObject>();
 
         foreach(Collider col in hits){
-            if(owner!=null && (col.gameObject == owner || col.transform.IsChildOf(owner.transform))) return;
+            if(col == null) continue;
+            if(owner != null && (col.gameObject == owner || col.transform.IsChildOf(owner.transform))) continue;
 
             IDamageable damageable = col.GetComponent<IDamageable>() ?? col.GetComponentInParent<IDamageable>();
 
@@ -79,9 +79,13 @@ public class CannonBall : MonoBehaviour {
                     damageable.TakeDamage(data);
                 }
             }
-            Rigidbody hitRb = col.attachedRigidbody;
-            if(hitRb!=null && !hitRb.isKinematic){
-                hitRb.AddExplosionForce(explosionForce, impactPoint, blastRadius, 1.2f , ForceMode.Impulse);
+
+            if (col != null)
+            {
+                Rigidbody hitRb = col.attachedRigidbody;
+                if(hitRb != null && !hitRb.isKinematic){
+                    hitRb.AddExplosionForce(explosionForce, impactPoint, blastRadius, 1.2f, ForceMode.Impulse);
+                }
             }
         }
         Destroy(gameObject);

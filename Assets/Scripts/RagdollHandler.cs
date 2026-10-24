@@ -1,4 +1,3 @@
-
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -13,7 +12,8 @@ public class RagdollHandler : MonoBehaviour
     private Collider rootCollider;
     private Rigidbody rootRb;
 
-    private void Awake(){
+    private void Awake()
+    {
         animator = GetComponentInChildren<Animator>();
         agent = GetComponent<NavMeshAgent>();
         healthComponent = GetComponent<Health>();
@@ -26,33 +26,60 @@ public class RagdollHandler : MonoBehaviour
         SetRagdollActive(false);
     }
 
-
-    public void SetRagdollActive(bool active){
+    public void SetRagdollActive(bool active)
+    {
         if (animator != null) animator.enabled = !active;
         if (agent != null) agent.enabled = !active;
 
-        foreach(Rigidbody rb in boneRigidbodies){
-            if(rb == rootRb) continue;
-            rb.isKinematic = !active;
+        if (boneRigidbodies != null)
+        {
+            foreach (Rigidbody rb in boneRigidbodies)
+            {
+                if (rb == null || rb == rootRb) continue;
+                rb.isKinematic = !active;
+            }
         }
 
-        foreach (Collider col in boneColliders)
+        if (boneColliders != null)
+        {
+            foreach (Collider col in boneColliders)
             {
-                if (col == rootCollider) continue;
+                if (col == null || col == rootCollider) continue;
                 col.enabled = active;
             }
+        }
 
         if (rootCollider != null) rootCollider.enabled = !active;
-            if (rootRb != null) rootRb.isKinematic = true;
+        if (rootRb != null) rootRb.isKinematic = true;
     }
 
-    public void  TriggerRagdoll(Vector3 hitDirection){
+    public void TriggerRagdoll(Vector3 hitDirection)
+    {
         SetRagdollActive(true);
-        if(boneRigidbodies.Length > 1){
-            Rigidbody impactBone = boneRigidbodies[1]; // Usually Hips
-            Vector3 force = (hitDirection != default ? hitDirection.normalized : -transform.forward) * 16f + Vector3.up * 4f;
-            impactBone.AddForce(force, ForceMode.Impulse);
+        if (boneRigidbodies != null && boneRigidbodies.Length > 0)
+        {
+            Rigidbody impactBone = null;
+            if (boneRigidbodies.Length > 1 && boneRigidbodies[1] != null && boneRigidbodies[1] != rootRb)
+            {
+                impactBone = boneRigidbodies[1]; // Usually Hips
+            }
+            else
+            {
+                for (int i = 0; i < boneRigidbodies.Length; i++)
+                {
+                    if (boneRigidbodies[i] != null && boneRigidbodies[i] != rootRb)
+                    {
+                        impactBone = boneRigidbodies[i];
+                        break;
+                    }
+                }
+            }
+
+            if (impactBone != null)
+            {
+                Vector3 force = (hitDirection != default ? hitDirection.normalized : -transform.forward) * 16f + Vector3.up * 4f;
+                impactBone.AddForce(force, ForceMode.Impulse);
+            }
         }
     }
-
 }
