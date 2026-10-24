@@ -4,8 +4,8 @@ using UnityEngine;
 public class BeastOfDarkness : MonoBehaviour
 {
     [Header("Rage Settings")]
-    [SerializeField] private float maxRage = 100f;
-    [SerializeField] private float currentRage = 0f;
+    [SerializeField] public float maxRage = 100f;
+    [SerializeField] public float currentRage = 0f;
     [SerializeField] private float drainRate = 7.5f;
     [SerializeField] private KeyCode activateKey = KeyCode.R;
 
