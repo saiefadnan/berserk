@@ -41,9 +41,7 @@ public class PlayerMovement : MonoBehaviour
 
      [Header("Audio")]
     [SerializeField] private AudioSource footAudioSrc;
-    [SerializeField] private AudioSource jumpAudioSrc;
     [SerializeField] private AudioClip footStep;
-    [SerializeField] private AudioClip jumpSound;
 
     private static readonly int EqMovParam = Animator.StringToHash("eq_mov");
     private static readonly int SpeedParam = Animator.StringToHash("speed");

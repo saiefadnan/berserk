@@ -10,14 +10,22 @@ public class Sword : MonoBehaviour
     public AudioSource audioSource;
     public AudioClip hitAudio;
     public AudioClip slashSound;
+    [SerializeField] private AudioClip beastHitAudio;
     public TrailRenderer swordTrail;
     private bool cool = false;
     private Animator animator;
     private Coroutine hitStopCoroutine;
+    private Color defaultTrailStartColor = Color.white;
+    private Color defaultTrailEndColor = new Color(1f, 1f, 1f, 0f);
 
     private void Start()
     {
         animator = GetComponentInParent<Animator>();
+         if (swordTrail != null)
+        {
+            defaultTrailStartColor = swordTrail.startColor;
+            defaultTrailEndColor = swordTrail.endColor;
+        }
     }
 
     // In Inspector: check "Is Trigger" on the Box Collider
@@ -41,15 +49,18 @@ public class Sword : MonoBehaviour
             }
 
             PlaySparkFlash(transform.position, other.transform.position);
-            PlayHitAudio();
+            BeastOfDarkness beast = transform.root.GetComponent<BeastOfDarkness>();
+            bool isBeastActive = (beast != null && beast.IsActive);
+            PlayHitAudio(isBeastActive);
             Vector3 slashDirection = transform.forward;
 
             float finalDamage = damage;
-            BeastOfDarkness beast = transform.root.GetComponent<BeastOfDarkness>();
-            if(beast != null && beast.IsActive){
+            if (isBeastActive)
+            {
                 finalDamage *= beast.DamageMultiplier;
             }
-            else if(beast != null){
+            else if (beast != null)
+            {
                 beast.AddRage(8f);
             }
 
@@ -108,17 +119,40 @@ public class Sword : MonoBehaviour
         //     audioSource.PlayOneShot(slashSound);
     }
 
-    public void PlayHitAudio()
+    public void PlayHitAudio(bool isBeast = false)
     {
-        if (audioSource != null && hitAudio != null)
+        if (audioSource == null) return;
+
+        if (isBeast && beastHitAudio != null)
+        {
+            audioSource.PlayOneShot(beastHitAudio);
+        }
+        else if (hitAudio != null)
+        {
             audioSource.PlayOneShot(hitAudio);
+        }
     }
 
     public void EnableDamage()
     {
         cool = true;
         AnimateSlash();
-        if (swordTrail != null) swordTrail.emitting = true;
+        if (swordTrail != null) {
+            BeastOfDarkness beast = transform.root.GetComponent<BeastOfDarkness>();
+           if (beast != null && beast.IsActive)
+            {
+                // Intense glowing crimson red!
+                swordTrail.startColor = new Color(1.0f, 0.05f, 0.05f, 0.95f);
+                swordTrail.endColor = new Color(0.4f, 0.0f, 0.0f, 0.0f);
+            }
+            else
+            {
+                // Normal sword trail
+                swordTrail.startColor = defaultTrailStartColor;
+                swordTrail.endColor = defaultTrailEndColor;
+            }
+            swordTrail.emitting = true;
+        }
         Invoke(nameof(DisableDamage), 0.5f);
     }
 

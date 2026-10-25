@@ -13,6 +13,12 @@ public class BeastOfDarkness : MonoBehaviour
     [SerializeField] private float damageMultiplier = 2.0f;
     [SerializeField] private float attackSpeedMultiplier = 1.35f;
 
+    [Header("Audio")]
+    [SerializeField] private AudioClip roarAudio;
+    [SerializeField] private AudioClip heartbeatLoop;
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioSource heartbeatAudioSource;
+
     public bool IsActive { get; private set; }= false;
     public float DamageMultiplier => damageMultiplier;
     public float AttackSpeedMultiplier => attackSpeedMultiplier;
@@ -23,6 +29,17 @@ public class BeastOfDarkness : MonoBehaviour
 
     private void Awake(){
         animator = GetComponentInChildren<Animator>();
+        if (audioSource == null)
+        {
+            audioSource = GetComponent<AudioSource>();
+        }
+        if (heartbeatAudioSource == null)
+        {
+            heartbeatAudioSource = gameObject.AddComponent<AudioSource>();
+            heartbeatAudioSource.playOnAwake = false;
+            heartbeatAudioSource.loop = true;
+            heartbeatAudioSource.spatialBlend = 0f;
+        }
     }
 
     private void Start(){
@@ -59,10 +76,24 @@ public class BeastOfDarkness : MonoBehaviour
             animator.speed = attackSpeedMultiplier;
         }
 
+        if (audioSource != null && roarAudio != null)
+        {
+            audioSource.PlayOneShot(roarAudio, 1.0f);
+        }
+
+        if (heartbeatAudioSource != null && heartbeatLoop != null)
+        {
+            heartbeatAudioSource.clip = heartbeatLoop;
+            heartbeatAudioSource.loop = true;
+            heartbeatAudioSource.volume = 0.85f;
+            heartbeatAudioSource.Play();
+        }
+
         if (CameraShake.Instance != null)
         {
             CameraShake.Instance.Shake(0.35f, 0.45f);
         }
+
 
         Debug.Log("<color=red><b>[BEAST OF DARKNESS UNLEASHED!] Damage x2, Attack Speed +35%!</b></color>");
     }
@@ -74,6 +105,11 @@ public class BeastOfDarkness : MonoBehaviour
         if (animator != null)
         {
             animator.speed = 1.0f;
+        }
+        if (heartbeatAudioSource != null)
+        {
+            heartbeatAudioSource.Stop();
+
         }
 
         Debug.Log("<color=grey>[Beast Subdued] Guts catches his breath. Normal combat restored.</color>");
