@@ -53,7 +53,7 @@ public class RagdollHandler : MonoBehaviour
         if (rootRb != null) rootRb.isKinematic = true;
     }
 
-    public void TriggerRagdoll(Vector3 hitDirection)
+    public void TriggerRagdoll(Vector3 hitDirection, float forceMultiplier = 1.0f)
     {
         SetRagdollActive(true);
         if (boneRigidbodies != null && boneRigidbodies.Length > 0)
@@ -77,7 +77,9 @@ public class RagdollHandler : MonoBehaviour
 
             if (impactBone != null)
             {
-                Vector3 force = (hitDirection != default ? hitDirection.normalized : -transform.forward) * 16f + Vector3.up * 4f;
+                float horizontalForce = 16f * forceMultiplier;
+                float verticalForce = 4f * Mathf.Clamp(forceMultiplier, 1f, 2.5f);
+                Vector3 force = (hitDirection != default ? hitDirection.normalized : -transform.forward) * horizontalForce + Vector3.up * verticalForce;
                 impactBone.AddForce(force, ForceMode.Impulse);
             }
         }

@@ -228,7 +228,8 @@ public class EnemyController : MonoBehaviour
             // Deal random damage to the player
             float dmg = Random.Range(minDamage, maxDamage + 1);
             IDamageable target = player.GetComponentInParent<IDamageable>() ?? player.GetComponent<IDamageable>();
-            if(target!=null)
+            AnimatorStateInfo stateinfo = animator.GetCurrentAnimatorStateInfo(0);
+            if(target!=null && stateinfo.IsName("attack0"))
             {
                 DamageData data = new DamageData
                 {
@@ -280,14 +281,32 @@ public class EnemyController : MonoBehaviour
     private void HandleDeath(DamageData data)
     {
         if (dead) return;
+        bool killedByBeast = false;
 
-        if (!fakingDeath && Random.value < fakeDeathChance)
+        if (data.attacker != null)
+        {
+            BeastOfDarkness beast = data.attacker.GetComponent<BeastOfDarkness>();
+            if (beast != null && beast.IsActive)
+            {
+                killedByBeast = true;
+                // Visceral Vampirism: Carnage feasting (+20 HP burst on kill)
+                Health killerHealth = data.attacker.GetComponent<Health>();
+                if (killerHealth != null)
+                {
+                    killerHealth.Heal(20f);
+                    Debug.Log("<color=red><b>[BEAST FEAST] +20 HP absorbed from kill!</b></color>");
+                }
+            }
+        }
+
+        if (!killedByBeast && !fakingDeath && Random.value < fakeDeathChance)
         {
             StartCoroutine(FakeDeath());
         }
         else
         {
-            Die(data.hitDirection, data.hitPoint);
+            float launchMultiplier = killedByBeast ? 2.8f : 1.0f;
+            Die(data.hitDirection, data.hitPoint, launchMultiplier);
         }
     }
 
@@ -295,16 +314,17 @@ public class EnemyController : MonoBehaviour
     // ─────────────────────────────────────────────
     //  DEATH
     // ─────────────────────────────────────────────
-    private void Die(Vector3 hitDirection = default, Vector3 hitPoint = default)
+    private void Die(Vector3 hitDirection = default, Vector3 hitPoint = default, float forceMultiplier = 1.0f)
     {
         dead = true;
         StopAllCoroutines();
+        if(audioSource.isPlaying) audioSource.Stop();
         // Trigger ragdoll ONLY on actual death!
-            RagdollHandler ragdoll = GetComponent<RagdollHandler>();
-            if (ragdoll != null)
-            {
-                ragdoll.TriggerRagdoll(hitDirection);
-            }
+        RagdollHandler ragdoll = GetComponent<RagdollHandler>();
+        if (ragdoll != null)
+        {
+            ragdoll.TriggerRagdoll(hitDirection, forceMultiplier);
+        }
         Invoke(nameof(DestroyEnemy), 10f);
     }
 
@@ -396,7 +416,7 @@ public class EnemyController : MonoBehaviour
         fakingDeath = true;
         agent.isStopped = true;
         animator.SetTrigger("knock_down");
-
+        if(audioSource.isPlaying) audioSource.Stop();
         // Wait a random 3-7 seconds
         float wait = Random.Range(3f, 7f);
         yield return new WaitForSeconds(wait);

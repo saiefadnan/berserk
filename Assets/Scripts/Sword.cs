@@ -58,6 +58,11 @@ public class Sword : MonoBehaviour
             if (isBeastActive)
             {
                 finalDamage *= beast.DamageMultiplier;
+                Health playerHealth = transform.root.GetComponent<Health>();
+                if (playerHealth != null)
+                {
+                    playerHealth.Heal(5f);
+                }
             }
             else if (beast != null)
             {
@@ -75,7 +80,10 @@ public class Sword : MonoBehaviour
             damageable.TakeDamage(data);
             if (CameraShake.Instance != null)
             {
-                CameraShake.Instance.Shake(0.16f, 0.20f);
+                if (isBeastActive)
+                        CameraShake.Instance.Shake(0.24f, 0.40f); //Massive screen shudder!!
+                else
+                    CameraShake.Instance.Shake(0.16f, 0.20f);
             }
         }
     }
