@@ -31,6 +31,11 @@ public class EnemyController : MonoBehaviour
     public float attackRange = 2.2f;
     public float timeBetweenAttacks = 1.4f;
 
+    [Header("Perception")]
+    [Range(30f, 180f)]
+    public float viewAngle = 110f;
+    public LayerMask obstacleMask;
+
     [Header("Damage")]
     public float minDamage = 10f;
     public float maxDamage = 25f;         // random per swing — unpredictable!
@@ -68,6 +73,7 @@ public class EnemyController : MonoBehaviour
     private AnimatorStateInfo stateInfo;
 
     private Vector3 walkPoint;
+    private Vector3 newWalkPoint = Vector3.zero;
     private bool walkPointSet;
 
     private bool alreadyAttacked;
@@ -81,6 +87,7 @@ public class EnemyController : MonoBehaviour
 
     // Hearing
     private bool playerHeard;
+    private PlayerMovement playerMovement;
 
     // Limping (below 40% health)
     private bool isLimping;
@@ -108,6 +115,11 @@ public class EnemyController : MonoBehaviour
         decisionTimer = Random.Range(0f, DECISION_INTERVAL);
         // Start subtle ambient breathing
         StartCoroutine(AmbientBreathing());
+        if (player != null)
+        {
+           playerMovement = player.GetComponent<PlayerMovement>() ??
+           player.GetComponentInParent<PlayerMovement>();
+        }
     }
 
     // ─────────────────────────────────────────────
@@ -145,9 +157,32 @@ public class EnemyController : MonoBehaviour
     // ─────────────────────────────────────────────
     private void DetectPlayer()
     {
-        playerInSightRange = Physics.CheckSphere(transform.position, sightRange, whatIsPlayer);
-        playerInAttackRange = Physics.CheckSphere(transform.position, attackRange, whatIsPlayer);
-        playerHeard = Physics.CheckSphere(transform.position, hearingRange, whatIsPlayer);
+        if(player == null) return;
+        float distanceToPlayer = Vector3.Distance(player.position, transform.position);
+        AnimatorStateInfo stateinfo = animator.GetCurrentAnimatorStateInfo(0);
+        playerInAttackRange = (distanceToPlayer <= attackRange);
+        playerHeard =  (playerMovement != null && playerMovement.isRunning && distanceToPlayer <= hearingRange) || stateinfo.IsName("hit_react");
+        if(stateinfo.IsName("hit_react"))
+        {
+            newWalkPoint = player.position;
+        }
+        playerInSightRange = playerInAttackRange && playerInSightRange;
+        if(distanceToPlayer <= sightRange)
+        {
+            Vector3 dirToPlayer = (player.position - transform.position).normalized;
+            float angle = Vector3.Angle(transform.forward, dirToPlayer);
+            if(angle < viewAngle / 2f)
+            {
+                Vector3 eyeOrigin = transform.position + Vector3.up * 1.5f;
+                Vector3 playerTarget = player.position + Vector3.up * 1.2f;
+                Vector3 rayDir = (playerTarget - eyeOrigin).normalized;
+                LayerMask blockMask = (obstacleMask != default)? obstacleMask : whatIsGround;
+                if(!Physics.Raycast(eyeOrigin, rayDir, distanceToPlayer, blockMask))
+                {
+                    playerInSightRange = true;
+                }
+            }
+        }
     }
 
     // ─────────────────────────────────────────────
@@ -157,8 +192,11 @@ public class EnemyController : MonoBehaviour
     {
         playGroanOnce = true;
         agent.speed = patrolSpeed;
-
-        if (!walkPointSet) SearchWalkPoint();
+        if(newWalkPoint!=Vector3.zero)
+        {
+            SearchWalkPoint(newWalkPoint);
+        }
+        else if (!walkPointSet) SearchWalkPoint();
         else agent.SetDestination(walkPoint);
 
         if ((transform.position - walkPoint).magnitude < 1f)
@@ -167,17 +205,25 @@ public class EnemyController : MonoBehaviour
         animator.SetTrigger("walk");
     }
 
-    private void SearchWalkPoint()
+    private void SearchWalkPoint(Vector3 targetPos = default)
     {
-        float rZ = Random.Range(-walkPointRange, walkPointRange);
-        float rX = Random.Range(-walkPointRange, walkPointRange);
-        walkPoint = new Vector3(
-            transform.position.x + rX,
-            transform.position.y,
-            transform.position.z + rZ);
+        if(targetPos!=default)
+        {
+            walkPoint = targetPos;
+        }
+        else
+        {
+            float rZ = Random.Range(-walkPointRange, walkPointRange);
+            float rX = Random.Range(-walkPointRange, walkPointRange);
+            walkPoint = new Vector3(
+                transform.position.x + rX,
+                transform.position.y,
+                transform.position.z + rZ);
+        }
 
         if (Physics.Raycast(walkPoint, -transform.up, 2f, whatIsGround))
             walkPointSet = true;
+        newWalkPoint = Vector3.zero;
     }
 
     // ─────────────────────────────────────────────
@@ -220,7 +266,7 @@ public class EnemyController : MonoBehaviour
         agent.SetDestination(transform.position);
         LookAtPlayerSmooth();
 
-        if (!alreadyAttacked)
+        if (!alreadyAttacked && !dead)
         {
             animator.ResetTrigger("run");
             animator.SetTrigger("attack");
@@ -498,11 +544,13 @@ public class EnemyController : MonoBehaviour
     // ─────────────────────────────────────────────
     private void OnDrawGizmosSelected()
     {
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, attackRange);
+        Vector3 leftRay = Quaternion.Euler(0, -viewAngle / 2f, 0) * transform.forward;
+        Vector3 rightRay = Quaternion.Euler(0, viewAngle / 2f, 0) * transform.forward;
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, sightRange);
         Gizmos.color = Color.cyan;
         Gizmos.DrawWireSphere(transform.position, hearingRange);
+        Gizmos.DrawRay(transform.position + Vector3.up, leftRay * sightRange);
+        Gizmos.DrawRay(transform.position + Vector3.up, rightRay * sightRange);
     }
 }

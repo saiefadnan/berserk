@@ -20,6 +20,7 @@ public class PlayerMovement : MonoBehaviour
     public float defaultRunSpeed = 5f;
     public float crouchHeight = 1f;
     public float crouchSpeed = 3f;
+    public bool isRunning = false;
 
     private float walkSpeed;
     private float runSpeed;
@@ -34,6 +35,7 @@ public class PlayerMovement : MonoBehaviour
     private CharacterController characterController;
     private Animator animator;
     private PlayerCombat combat;
+    private BeastOfDarkness beast;
 
     private EquipWeapon equipWeaponComponent;
     private GameObject swordHolder;
@@ -54,6 +56,7 @@ public class PlayerMovement : MonoBehaviour
         characterController = GetComponent<CharacterController>();
         animator = GetComponentInChildren<Animator>();
         combat = GetComponent<PlayerCombat>();
+        beast = GetComponent<BeastOfDarkness>();
     }
 
     void Start()
@@ -74,11 +77,12 @@ public class PlayerMovement : MonoBehaviour
 
 
         bool isWalking = Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.A);
-        bool isRunning = Input.GetKey(KeyCode.LeftShift) && isWalking;
+        isRunning = Input.GetKey(KeyCode.LeftShift) && isWalking;
 
         float targetSpeed = !canMove || !isWalking ? 0 : (isRunning ? 1.0f : 0.5f);
-        float curSpeedX = canMove ? (isRunning ? runSpeed : walkSpeed) * Input.GetAxis("Vertical") : 0;
-        float curSpeedY = canMove ? (isRunning ? runSpeed : walkSpeed) * Input.GetAxis("Horizontal") : 0;
+        float speedMultiplier = (beast != null && beast.IsActive) ? 1.25f : 1.0f;
+        float curSpeedX = canMove ? (isRunning ? runSpeed : walkSpeed) * speedMultiplier * Input.GetAxis("Vertical") : 0;
+        float curSpeedY = canMove ? (isRunning ? runSpeed : walkSpeed) * speedMultiplier * Input.GetAxis("Horizontal") : 0;
         bool defaultState = baseState.IsName("idle");
         bool shoot = Input.GetMouseButton(1);
 
@@ -108,7 +112,7 @@ public class PlayerMovement : MonoBehaviour
         {
             var targetAngle = Mathf.Atan2(moveDirection.x, moveDirection.z) * Mathf.Rad2Deg;
             FaceAngle(targetAngle);
-            HandleFootSteps(baseState, isRunning);
+            HandleFootSteps(baseState);
         }
         else
         {
@@ -146,14 +150,14 @@ public class PlayerMovement : MonoBehaviour
         }
 
     }
-    private void HandleFootSteps(AnimatorStateInfo baseState, bool IsRunning){
+    private void HandleFootSteps(AnimatorStateInfo baseState){
         if (!characterController.isGrounded && !combat.IsAttacking)
         {
             StopFootStep();
         }
         else if (!stepRunning)
         {
-            PlayFootStep(IsRunning);
+            PlayFootStep();
         }
     }
 
@@ -174,7 +178,7 @@ public class PlayerMovement : MonoBehaviour
         figure.transform.rotation = Quaternion.Euler(0.0f, angle, 0.0f);
     }
 
-    private void PlayFootStep(bool isRunning = false)
+    private void PlayFootStep()
     {
         footAudioSrc.clip = footStep;
         footAudioSrc.loop = true;

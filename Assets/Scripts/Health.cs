@@ -23,7 +23,7 @@ public class Health: MonoBehaviour, IDamageable{
 
     public float CurrentHealth => currentHealth;
     public float MaxHealth => maxHealth;
-    public bool IsDead => isDead;                                                                           
+    public bool IsDead => isDead;
 
     private void Awake()
     {
@@ -52,12 +52,17 @@ public class Health: MonoBehaviour, IDamageable{
         OnDamaged?.Invoke(data);
         OnHealthChanged?.Invoke(currentHealth, maxHealth);
 
+        BeastOfDarkness beast = GetComponent<BeastOfDarkness>();
+        if (beast != null && !beast.IsActive)
+        {
+            beast.AddRage(12f);
+        }
             // 3. Check for Death
         if (currentHealth <= 0f && !isDead)
         {
             isDead = true;
             OnDeath?.Invoke(data);
-        }        
+        }
     }
 
     public void Heal(float amount)
