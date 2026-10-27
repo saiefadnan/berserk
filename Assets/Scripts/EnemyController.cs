@@ -111,6 +111,8 @@ public class EnemyController : MonoBehaviour
         animator = GetComponentInChildren<Animator>();
         healthComponent = GetComponent<Health>();
         agent.speed = patrolSpeed;
+        agent.obstacleAvoidanceType = ObstacleAvoidanceType.HighQualityObstacleAvoidance;
+        agent.avoidancePriority = Random.Range(30, 70);
         // Random start offset so multiple enemies don't sync perfectly
         decisionTimer = Random.Range(0f, DECISION_INTERVAL);
         // Start subtle ambient breathing
@@ -239,6 +241,7 @@ public class EnemyController : MonoBehaviour
         {
             PlayRandomClip(screamClips);
             playGroanOnce = false;
+            AlertNearbyAllies(16f);
         }
 
         if (Random.value < flankChance && !alreadyAttacked)
@@ -537,6 +540,33 @@ public class EnemyController : MonoBehaviour
         if (audioSource.isPlaying) return; // don't interrupt an ongoing clip
         audioSource.clip = clips[Random.Range(0, clips.Length)];
         audioSource.Play();
+    }
+
+    private void AlertNearbyAllies(float radius){
+        Collider[] hits = Physics.OverlapSphere(transform.position, radius);
+        foreach (Collider hit in hits)
+        {
+            if(hit.gameObject == gameObject) continue;
+            EnemyController ally = hit.GetComponent<EnemyController>() ?? hit.GetComponentInParent<EnemyController>();
+            if (ally != null && !ally.dead)
+            {
+                ally.ReceiveAllyAlert(player!=null ? player.position : transform.position);
+            }
+        }
+    }
+
+    public void ReceiveAllyAlert(Vector3 alertPosition){
+        if(dead) return;
+        if(!playerInSightRange || !playerHeard){
+            playerHeard = true;
+            if(agent!=null && agent.isOnNavMesh){
+                agent.SetDestination(alertPosition);
+            }
+            if(playGroanOnce){
+                PlayRandomClip(screamClips);
+                playGroanOnce = false;
+            }
+        }
     }
 
     // ─────────────────────────────────────────────
