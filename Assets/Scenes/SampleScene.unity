@@ -587,6 +587,7 @@ MonoBehaviour:
   defaultRunSpeed: 5
   crouchHeight: 1
   crouchSpeed: 3
+  isRunning: 0
   footAudioSrc: {fileID: 35385143}
   footStep: {fileID: 8300000, guid: baf6714eaff7fcb4eb8334ab5c7c1019, type: 3}
 --- !u!143 &35385140
@@ -39536,6 +39537,10 @@ MonoBehaviour:
   sightRange: 10
   attackRange: 1.2
   timeBetweenAttacks: 2
+  viewAngle: 110
+  obstacleMask:
+    serializedVersion: 2
+    m_Bits: 0
   minDamage: 10
   maxDamage: 25
   patrolSpeed: 1.2
@@ -43876,6 +43881,10 @@ MonoBehaviour:
   sightRange: 10
   attackRange: 1.2
   timeBetweenAttacks: 2
+  viewAngle: 110
+  obstacleMask:
+    serializedVersion: 2
+    m_Bits: 0
   minDamage: 10
   maxDamage: 25
   patrolSpeed: 1.2
@@ -44588,6 +44597,10 @@ MonoBehaviour:
   sightRange: 10
   attackRange: 1.2
   timeBetweenAttacks: 2
+  viewAngle: 110
+  obstacleMask:
+    serializedVersion: 2
+    m_Bits: 0
   minDamage: 10
   maxDamage: 25
   patrolSpeed: 1.2
@@ -46868,6 +46881,10 @@ MonoBehaviour:
   sightRange: 10
   attackRange: 1.2
   timeBetweenAttacks: 2
+  viewAngle: 110
+  obstacleMask:
+    serializedVersion: 2
+    m_Bits: 0
   minDamage: 10
   maxDamage: 25
   patrolSpeed: 1.2
@@ -69477,6 +69494,10 @@ MonoBehaviour:
   sightRange: 10
   attackRange: 1.2
   timeBetweenAttacks: 2
+  viewAngle: 60
+  obstacleMask:
+    serializedVersion: 2
+    m_Bits: 1024
   minDamage: 10
   maxDamage: 25
   patrolSpeed: 1.2

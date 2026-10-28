@@ -73,12 +73,9 @@ public class EnemyController : MonoBehaviour
     private AnimatorStateInfo stateInfo;
 
     private Vector3 walkPoint;
-    private Vector3 newWalkPoint = Vector3.zero;
     private bool walkPointSet;
 
-    private bool alreadyAttacked;
-    private bool dead;
-    private bool fakingDeath;
+    public bool IsDead => (combat != null) ? combat.IsDead : false;
     private bool isStaring;
     private bool isCharging;
     private bool playerInSightRange;
@@ -88,6 +85,8 @@ public class EnemyController : MonoBehaviour
     // Hearing
     private bool playerHeard;
     private PlayerMovement playerMovement;
+    private EnemyPerception perception;
+    private EnemyCombat combat;
 
     // Limping (below 40% health)
     private bool isLimping;
@@ -122,6 +121,15 @@ public class EnemyController : MonoBehaviour
            playerMovement = player.GetComponent<PlayerMovement>() ??
            player.GetComponentInParent<PlayerMovement>();
         }
+        perception = GetComponent<EnemyPerception>();
+        if (perception == null)
+        {
+            perception = gameObject.AddComponent<EnemyPerception>();
+        }
+        combat = GetComponent<EnemyCombat>();
+        if (combat == null){
+            combat = gameObject.AddComponent<EnemyCombat>();
+        }
     }
 
     // ─────────────────────────────────────────────
@@ -129,11 +137,16 @@ public class EnemyController : MonoBehaviour
     // ─────────────────────────────────────────────
     void Update()
     {
-        if (dead && !fakingDeath) return;
-        if (fakingDeath) return; // coroutine handles fake-death timing
+        if (combat!=null && (combat.IsDead || combat.IsFakingDeath)) return;
 
         SyncAnimatorStopState();
-        DetectPlayer();
+        //DetectPlayer();
+        if (perception != null){
+            perception.UpdatePerception();
+            playerInSightRange = perception.CanSeePlayer;
+            playerInAttackRange = perception.IsInAttackRange;
+            playerHeard = perception.CanHearPlayer;
+        }
 
         decisionTimer -= Time.deltaTime;
         if (decisionTimer <= 0f)
@@ -155,54 +168,28 @@ public class EnemyController : MonoBehaviour
     }
 
     // ─────────────────────────────────────────────
-    //  DETECTION
-    // ─────────────────────────────────────────────
-    private void DetectPlayer()
-    {
-        if(player == null) return;
-        float distanceToPlayer = Vector3.Distance(player.position, transform.position);
-        AnimatorStateInfo stateinfo = animator.GetCurrentAnimatorStateInfo(0);
-        playerInAttackRange = (distanceToPlayer <= attackRange);
-        playerHeard =  (playerMovement != null && playerMovement.isRunning && distanceToPlayer <= hearingRange) || stateinfo.IsName("hit_react");
-        if(stateinfo.IsName("hit_react"))
-        {
-            newWalkPoint = player.position;
-        }
-        playerInSightRange = playerInAttackRange && playerInSightRange;
-        if(distanceToPlayer <= sightRange)
-        {
-            Vector3 dirToPlayer = (player.position - transform.position).normalized;
-            float angle = Vector3.Angle(transform.forward, dirToPlayer);
-            if(angle < viewAngle / 2f)
-            {
-                Vector3 eyeOrigin = transform.position + Vector3.up * 1.5f;
-                Vector3 playerTarget = player.position + Vector3.up * 1.2f;
-                Vector3 rayDir = (playerTarget - eyeOrigin).normalized;
-                LayerMask blockMask = (obstacleMask != default)? obstacleMask : whatIsGround;
-                if(!Physics.Raycast(eyeOrigin, rayDir, distanceToPlayer, blockMask))
-                {
-                    playerInSightRange = true;
-                }
-            }
-        }
-    }
-
-    // ─────────────────────────────────────────────
     //  PATROL — shambling, erratic path
     // ─────────────────────────────────────────────
     private void Patrol()
     {
         playGroanOnce = true;
         agent.speed = patrolSpeed;
-        if(newWalkPoint!=Vector3.zero)
+        if (perception != null && perception.LastKnownPosition != Vector3.zero)
         {
-            SearchWalkPoint(newWalkPoint);
+            SearchWalkPoint(perception.LastKnownPosition);
         }
         else if (!walkPointSet) SearchWalkPoint();
-        else agent.SetDestination(walkPoint);
+
+        if(walkPointSet) agent.SetDestination(walkPoint);
 
         if ((transform.position - walkPoint).magnitude < 1f)
+        {
             walkPointSet = false;
+            if (perception != null)
+            {
+                perception.ClearLastKnownPosition();
+            }
+        }
 
         animator.SetTrigger("walk");
     }
@@ -225,7 +212,6 @@ public class EnemyController : MonoBehaviour
 
         if (Physics.Raycast(walkPoint, -transform.up, 2f, whatIsGround))
             walkPointSet = true;
-        newWalkPoint = Vector3.zero;
     }
 
     // ─────────────────────────────────────────────
@@ -244,7 +230,7 @@ public class EnemyController : MonoBehaviour
             AlertNearbyAllies(16f);
         }
 
-        if (Random.value < flankChance && !alreadyAttacked)
+        if (Random.value < flankChance)
         {
             // Flank: aim slightly to the side of the player
             Vector3 flankOffset = Quaternion.Euler(0, Random.Range(-45f, 45f), 0)
@@ -269,112 +255,9 @@ public class EnemyController : MonoBehaviour
         agent.SetDestination(transform.position);
         LookAtPlayerSmooth();
 
-        if (!alreadyAttacked && !dead)
-        {
-            animator.ResetTrigger("run");
-            animator.SetTrigger("attack");
-
-            // Deal random damage to the player
-            float dmg = Random.Range(minDamage, maxDamage + 1);
-            IDamageable target = player.GetComponentInParent<IDamageable>() ?? player.GetComponent<IDamageable>();
-            AnimatorStateInfo stateinfo = animator.GetCurrentAnimatorStateInfo(0);
-            if(target!=null && stateinfo.IsName("attack0"))
-            {
-                DamageData data = new DamageData
-                {
-                    amount = dmg,
-                    hitDirection = transform.forward,
-                    hitPoint = player.position,
-                    attacker = gameObject
-                };
-                target.TakeDamage(data);
-            }
-
-            alreadyAttacked = true;
-            Invoke(nameof(ResetAttack), timeBetweenAttacks);
+        if(combat!=null && combat.CanAttack){
+            combat.PerformAttack(player);
         }
-    }
-
-    private void OnEnable()
-    {
-        if (healthComponent != null)
-        {
-            healthComponent.OnDamaged += HandleDamaged;
-            healthComponent.OnDeath += HandleDeath;
-        }
-    }
-
-    private void OnDisable()
-    {
-        if (healthComponent != null)
-        {
-            healthComponent.OnDamaged -= HandleDamaged;
-            healthComponent.OnDeath -= HandleDeath;
-        }
-    }
-
-    private void HandleDamaged(DamageData data)
-    {
-        if (dead) return;
-
-        Rigidbody rb = GetComponent<Rigidbody>();
-        if (rb != null && !rb.isKinematic)
-        {
-            rb.linearVelocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
-        }
-
-        animator.SetTrigger("hit_react");
-    }
-
-    private void HandleDeath(DamageData data)
-    {
-        if (dead) return;
-        bool killedByBeast = false;
-
-        if (data.attacker != null)
-        {
-            BeastOfDarkness beast = data.attacker.GetComponent<BeastOfDarkness>();
-            if (beast != null && beast.IsActive)
-            {
-                killedByBeast = true;
-                // Visceral Vampirism: Carnage feasting (+20 HP burst on kill)
-                Health killerHealth = data.attacker.GetComponent<Health>();
-                if (killerHealth != null)
-                {
-                    killerHealth.Heal(20f);
-                    Debug.Log("<color=red><b>[BEAST FEAST] +20 HP absorbed from kill!</b></color>");
-                }
-            }
-        }
-
-        if (!killedByBeast && !fakingDeath && Random.value < fakeDeathChance)
-        {
-            StartCoroutine(FakeDeath());
-        }
-        else
-        {
-            float launchMultiplier = killedByBeast ? 2.8f : 1.0f;
-            Die(data.hitDirection, data.hitPoint, launchMultiplier);
-        }
-    }
-
-    private void ResetAttack() => alreadyAttacked = false;
-    // ─────────────────────────────────────────────
-    //  DEATH
-    // ─────────────────────────────────────────────
-    private void Die(Vector3 hitDirection = default, Vector3 hitPoint = default, float forceMultiplier = 1.0f)
-    {
-        dead = true;
-        StopAllCoroutines();
-        if(audioSource.isPlaying) audioSource.Stop();
-        // Trigger ragdoll ONLY on actual death!
-        RagdollHandler ragdoll = GetComponent<RagdollHandler>();
-        if (ragdoll != null)
-        {
-            ragdoll.TriggerRagdoll(hitDirection, forceMultiplier);
-        }
-        Invoke(nameof(DestroyEnemy), 10f);
     }
 
     private void DestroyEnemy() => Destroy(gameObject);
@@ -384,7 +267,7 @@ public class EnemyController : MonoBehaviour
     // ─────────────────────────────────────────────
     private void RollUnpredictableDecision()
     {
-        if (!playerInSightRange || dead) return;
+        if (!playerInSightRange || IsDead) return;
 
         float roll = Random.value;
 
@@ -457,37 +340,6 @@ public class EnemyController : MonoBehaviour
     }
 
     // ─────────────────────────────────────────────
-    //  COROUTINE: FAKE DEATH
-    //  Falls down, waits, then gets back up when player is close
-    // ─────────────────────────────────────────────
-    private IEnumerator FakeDeath()
-    {
-        fakingDeath = true;
-        agent.isStopped = true;
-        animator.SetTrigger("knock_down");
-        if(audioSource.isPlaying) audioSource.Stop();
-        // Wait a random 3-7 seconds
-        float wait = Random.Range(3f, 7f);
-        yield return new WaitForSeconds(wait);
-
-        // Only get back up if player is nearby
-        if (Vector3.Distance(transform.position, player.position) < sightRange)
-        {
-            fakingDeath = false;
-            dead = false;
-            agent.isStopped = false;
-            healthComponent.Revive(40);
-            animator.SetTrigger("hit_react"); // "getting up" animation
-            PlayRandomClip(screamClips);
-        }
-        else
-        {
-            // Player walked away — actually die
-            Die();
-        }
-    }
-
-    // ─────────────────────────────────────────────
     //  COROUTINE: AMBIENT BREATHING
     //  Plays creepy breathing sounds at random intervals
     // ─────────────────────────────────────────────
@@ -496,7 +348,7 @@ public class EnemyController : MonoBehaviour
         while (true)
         {
             yield return new WaitForSeconds(Random.Range(4f, 10f));
-            if (!dead && breathingClips != null && breathingClips.Length > 0)
+            if (!IsDead && breathingClips != null && breathingClips.Length > 0)
             {
                 float dist = Vector3.Distance(transform.position, player.position);
                 if (dist < sightRange * 1.5f)
@@ -548,7 +400,7 @@ public class EnemyController : MonoBehaviour
         {
             if(hit.gameObject == gameObject) continue;
             EnemyController ally = hit.GetComponent<EnemyController>() ?? hit.GetComponentInParent<EnemyController>();
-            if (ally != null && !ally.dead)
+            if (ally != null && !ally.IsDead)
             {
                 ally.ReceiveAllyAlert(player!=null ? player.position : transform.position);
             }
@@ -556,7 +408,7 @@ public class EnemyController : MonoBehaviour
     }
 
     public void ReceiveAllyAlert(Vector3 alertPosition){
-        if(dead) return;
+        if(IsDead) return;
         if(!playerInSightRange || !playerHeard){
             playerHeard = true;
             if(agent!=null && agent.isOnNavMesh){
@@ -567,20 +419,5 @@ public class EnemyController : MonoBehaviour
                 playGroanOnce = false;
             }
         }
-    }
-
-    // ─────────────────────────────────────────────
-    //  GIZMOS
-    // ─────────────────────────────────────────────
-    private void OnDrawGizmosSelected()
-    {
-        Vector3 leftRay = Quaternion.Euler(0, -viewAngle / 2f, 0) * transform.forward;
-        Vector3 rightRay = Quaternion.Euler(0, viewAngle / 2f, 0) * transform.forward;
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, sightRange);
-        Gizmos.color = Color.cyan;
-        Gizmos.DrawWireSphere(transform.position, hearingRange);
-        Gizmos.DrawRay(transform.position + Vector3.up, leftRay * sightRange);
-        Gizmos.DrawRay(transform.position + Vector3.up, rightRay * sightRange);
     }
 }
