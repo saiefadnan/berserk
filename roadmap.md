@@ -29,71 +29,86 @@ flowchart TD
 
 ---
 
-### Phase 1: Player Locomotion, Controls & Camera (The "3 Cs")
+### Phase 1: Player Locomotion, Controls & Camera (The "3 Cs") (:white_check_mark: CORE COMPLETE)
 > **Goal:** Ensure moving and controlling Guts feels responsive, fluid, and grounded before layering combat mechanics.
 
-- [ ] **1.1 Locomotion Polish**
-  - Smooth 8-directional movement blending (Walk ➔ Jog ➔ Sprint).
-  - Damped rotation interpolation (`Mathf.SmoothDampAngle`) to prevent abrupt model snapping.
-  - Footstep audio synchronization linked to animation contact events.
-- [ ] **1.2 Dodge / Roll Mechanic**
-  - Directional combat roll/dash with invulnerability frames (i-frames).
-  - Stamina consumption and recovery delays.
-  - Cancel windows from light movement or idle states.
-- [ ] **1.3 Camera & Targeting System**
-  - Third-person orbit camera with collision detection (prevent clipping through terrain/walls).
-  - Smooth camera distance adjustment during sprints and combat encounters.
-  - Lock-on targeting system with target-switching via mouse flick.
+- [x] **1.1 Locomotion Polish**
+  - Smooth movement blending (Walk ➔ Sprint), downward grounded physics clamping.
+  - Footstep audio synchronization linked to locomotion states.
+- [x] **1.2 Dodge / Roll Mechanic**
+  - Directional combat roll (`Combat_Roll`) with invulnerability frames (i-frames).
+  - Cancel windows from light movement or idle states into rolls.
+- [ ] **1.3 Camera & Targeting Polish**
+  - Third-person orbit camera with collision detection.
+  - Optional lock-on targeting system with target-switching.
 
 ---
 
-### Phase 2: Melee Combat & Animation Feel
+### Phase 2: Melee Combat & Animation Feel (:white_check_mark: CORE COMPLETE)
 > **Goal:** Capture the overwhelming weight and lethality of the Dragonslayer sword.
 
-- [ ] **2.1 Attack Buffering & Combo System**
-  - Queue input buffering (0.2s - 0.3s window) for fluid light and heavy combo chains.
-  - Branching attack strings (Light Combo, Heavy Finisher, Running Slash).
-  - Attack recovery cancel windows into dodge or block.
-- [ ] **2.2 Precision Hit Detection**
-  - Weapon-arc raycasting / discrete blade hitboxes along the sword mesh to prevent phantom hits.
-  - Hitbox activation tied tightly to active swing frames.
-- [ ] **2.3 Hit Feedback (Game Feel / Juiciness)**
-  - **Hitstop / Frame Freeze:** Brief (0.05s - 0.1s) animation pause upon connecting with enemies.
+- [x] **2.1 Attack Buffering & Combo System**
+  - Input buffering for fluid light and heavy combo chains (`attack1`, `attack2`, `attack3`).
+  - Dragonslayer block stance (`85%` damage absorption) and cancel windows into dodge.
+- [x] **2.2 Hit Detection & Layer Masking**
+  - Discrete blade trigger hitboxes along Dragonslayer mesh with active swing frame windows.
+  - Upper-body animation masking allowing locomotion while equipping/swinging.
+- [x] **2.3 Hit Feedback (Game Feel / Juiciness)**
+  - **Hitstop / Frame Freeze:** 0.07s micro-pause on both attacker and victim upon connection.
   - **Camera Shake:** Directional, proportional camera impulse on heavy impacts.
-  - **Sparks & Metal Clangs:** Dynamic VFX/SFX on armor or parry collisions.
+  - Directional weapon trail (crimson surge during Beast of Darkness).
 
 ---
 
-### Phase 3: Enemy AI & Combat Encounters
-> **Goal:** Transform enemies into readable, challenging, and tactical opponents.
+### Phase 3: Enemy AI & Visceral Combat Encounters
+> **Goal:** Transform enemies into tactical, lethal opponents with defensive stances, dynamic multi-attack combos, and bone-jarring blade clashes.
 
-- [ ] **3.1 AI State Machine Architecture**
-  - States: `Idle`, `Patrol`, `Alert/Investigate`, `Approach`, `Telegraph/Windup`, `Attack`, `Stagger`, `Death`.
-  - NavMesh pathfinding with dynamic obstacle avoidance.
-- [ ] **3.2 Readable Attack Telegraphing**
-  - Clear visual and audio wind-ups prior to enemy damage frames.
-  - Unblockable attack visual indicators.
-- [ ] **3.3 Reaction & Stagger Dynamics**
-  - Directional flinch and stagger animations based on hit force.
-  - Knockdown and recovery states from heavy Dragonslayer strikes.
-- [ ] **3.4 Combat Slot Manager (Group Coordination)**
-  - Token/slot manager ensuring mobs coordinate attacks rather than striking simultaneously.
+- [x] **3.1 Modular AI Architecture & Perception** (:white_check_mark: COMPLETED)
+  - Decoupled into `EnemyPerception.cs` (110° vision cone, stealth sprint hearing, close-quarters memory latch, investigation tracking).
+  - Decoupled into `EnemyCombat.cs` (hit reaction stagger, fake-death revival, Beast feast +20 HP, ragdoll launch).
+  - High-quality NavMesh obstacle avoidance with randomized priority (30–70) and horde screech alert propagation (16m).
+- [ ] **3.2 Blade-on-Blade Clashing & Metal Sparks (Conflict Feedback)**
+  - Real-time blade vs blade & blade vs guard collision detection.
+  - High-velocity directional friction sparks VFX (`Sparks.mat`) at sword contact point.
+  - Resonant heavy steel *CLANG* audio design (`sword_clash.wav`).
+  - Dual hitstop micro-freeze (0.07s - 0.09s) on both Guts and enemy for massive kinetic resistance.
+  - Camera shudder impulse and deflection weapon bounce.
+- [ ] **3.3 Enemy Self-Defense & Defensive Stances**
+  - Reactive guard posture: raising weapon/shield (`OneHand_Up_Shield_Block_Idle`) when Guts attacks or closes in.
+  - Guard mitigation: 80–90% damage absorption on blocked hits.
+  - Guard impact reaction: heavy block flinch animation (`OneHand_Up_Shield_Block_Hit_1`) with spark burst.
+  - Tactical evasion: defensive backstep hop (`Combat_Dodge_Back`) to escape heavy combo finishers.
+- [ ] **3.4 Multi-Attack Arsenal & Combo Chaining**
+  - **Attack 1 (Light Slash):** Fast horizontal sweep (`attack0` / `OneHand_Up_Attack_1`).
+  - **Attack 2 (Heavy Cleave):** Downward overhead power strike (`Standing_Melee_Attack_Downward` / `OneHand_Up_Attack_2`) with heavy stagger.
+  - **Attack 3 (Lunging Gap-Closer):** Forward lunge thrust / shield bash (`Enemy_Attack_1` / `OneHand_Up_Attack_3`) from 3m away.
+  - Branching 2-hit combo strings and unpredictable attack selection.
+- [ ] **3.5 Tactical Combat Brain (Spacing, Circling & Counters)**
+  - Orbital combat strafing / circling at 2.5m - 3.5m spacing instead of mindless charging.
+  - Distinct visual wind-up tells and audible grunts before heavy strikes.
+  - Punish window AI: immediate counter-attack if Guts whiffs or strikes an active enemy guard.
+  - Combat slot token manager for coordinated multi-enemy engagements.
 
 ---
 
-### Phase 4: Signature Guts Mechanics
+### Phase 4: Signature Guts Mechanics (:white_check_mark: COMPLETED)
 > **Goal:** Deliver the authentic Berserk character fantasy.
 
-- [ ] **4.1 Prosthetic Left Arm Cannon**
-  - Quick-draw and aim modes for the arm cannon.
-  - Devastating explosive projectile with area-of-effect (AOE) damage and ragdoll physics.
-  - Heavy recoil animation, smoke VFX, and ammo / cooldown balance.
-- [ ] **4.2 Visceral Blood & Gore System**
-  - Directional blood splatter particles matching sword swing vectors.
+- [x] **4.1 Prosthetic Left Arm Cannon**
+  - Aim mode (`Right Mouse`) & quick-fire for cannonball projectile.
+  - Devastating explosive area-of-effect damage, debris smoke VFX, and ragdoll radial physics launch.
+  - Recoil animation, firing cooldown, and authentic audio synthesis.
+- [x] **4.2 Visceral Blood & Gore System**
+  - Directional blood splatter particles matching Dragonslayer swing vectors.
   - Surface decal projection on terrain, obstacles, and enemy meshes.
-- [ ] **4.3 Dynamic Dismemberment System**
-  - Slice/sever mechanics on lethal strikes (limbs, torso cleave).
-  - Ragdoll separation with blood spray emitters on severed joints.
+- [x] **4.3 Dynamic Dismemberment System**
+  - Decapitation and limb severing on lethal strikes with severed neck arterial blood fountain.
+  - Multi-zone physics bone collapse, static severed mesh baking, and bone ragdoll separation.
+- [x] **4.4 Beast of Darkness Awakening (The 4 Pillars)**
+  - Dynamic rage accumulation meter (+12 per damage taken, +8 per sword strike).
+  - Procedural blood vignette, heartbeat pulse, predatory FOV zoom, and crimson sword trail.
+  - Demonic red eye ribbon trail with point light on Guts' head socket.
+  - Visceral vampirism (+5 HP lifesteal per hit, +20 HP burst on kill) and 2.8x ragdoll launch force.
 
 ---
 
