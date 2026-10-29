@@ -132,6 +132,7 @@ MonoBehaviour:
   audioSource: {fileID: 8142249806408886888}
   hitAudio: {fileID: 8300000, guid: 06a7557fcc0bde0479039f88998f3842, type: 3}
   slashSound: {fileID: 8300000, guid: b0d4e4f2481034b408921d0778794e51, type: 3}
+  clashAudio: {fileID: 8300000, guid: 520f25ba244a65b40bec79fa29a2afd8, type: 3}
   beastHitAudio: {fileID: 8300000, guid: 9a19e34b15512704d98fdab1927e561e, type: 3}
   swordTrail: {fileID: 3889870218456909905}
 --- !u!1 &834875114661749936

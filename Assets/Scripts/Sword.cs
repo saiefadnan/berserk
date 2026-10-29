@@ -3,15 +3,17 @@ using UnityEngine;
 
 public class Sword : MonoBehaviour
 {
-    public float damage = 10f;
-    public ParticleSystem slashEffect;
+    [SerializeField] private float damage = 10f;
+    [SerializeField] private ParticleSystem slashEffect;
     [SerializeField] private GameObject flashEffectPrefab;
     [SerializeField] private GameObject bloodEffectPrefab;
-    public AudioSource audioSource;
-    public AudioClip hitAudio;
-    public AudioClip slashSound;
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip hitAudio;
+    [SerializeField] private AudioClip slashSound;
+    [SerializeField] private AudioClip clashAudio;
     [SerializeField] private AudioClip beastHitAudio;
-    public TrailRenderer swordTrail;
+    [SerializeField] private TrailRenderer swordTrail;
+
     private bool cool = false;
     private Animator animator;
     private Coroutine hitStopCoroutine;
@@ -39,19 +41,29 @@ public class Sword : MonoBehaviour
             // No ContactPoint available with triggers, use transform instead
             Vector3 hitPoint = other.ClosestPoint(transform.position);
             Vector3 hitNormal = (hitPoint - transform.position).normalized;
-
-            if (damageable.surfaceType == SurfaceType.Flesh)
+            EnemyCombat enemyCombat = other.GetComponent<EnemyCombat>() ?? other.GetComponentInParent<EnemyCombat>();
+            bool isBlocked = (enemyCombat != null && enemyCombat.IsBlocking) || (damageable.surfaceType == SurfaceType.Metal);
+            BeastOfDarkness beast = transform.root.GetComponent<BeastOfDarkness>();
+            bool isBeastActive = (beast != null && beast.IsActive);
+            if(isBlocked){
+                PlaySparkFlash(hitPoint, other.transform.position);
+                PlayClashAudio();
+                Animator enemyAnim = other.GetComponentInChildren<Animator>();
+                TriggerHitStop(0.09f, enemyAnim);
+                if (CameraShake.Instance != null)
+                {
+                    CameraShake.Instance.Shake(0.18f, 0.28f);
+                }
+            }
+            else if (damageable.surfaceType == SurfaceType.Flesh)
             {
                 PlayBloodSplatter(hitPoint, hitNormal, other.transform);
                 // Guts Combat Juice: Micro-hitstop & heavy impact camera shake
                 Animator enemyAnim = other.GetComponentInChildren<Animator>();
                 TriggerHitStop(0.07f, enemyAnim);
+                PlayHitAudio(isBeastActive);
             }
 
-            PlaySparkFlash(transform.position, other.transform.position);
-            BeastOfDarkness beast = transform.root.GetComponent<BeastOfDarkness>();
-            bool isBeastActive = (beast != null && beast.IsActive);
-            PlayHitAudio(isBeastActive);
             Vector3 slashDirection = transform.forward;
 
             float finalDamage = damage;
@@ -139,6 +151,11 @@ public class Sword : MonoBehaviour
         {
             audioSource.PlayOneShot(hitAudio);
         }
+    }
+
+    public void PlayClashAudio(){
+        if (audioSource != null && clashAudio != null)
+            audioSource.PlayOneShot(clashAudio);
     }
 
     public void EnableDamage()

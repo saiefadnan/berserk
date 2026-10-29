@@ -155,9 +155,20 @@ public class EnemyController : MonoBehaviour
             RollUnpredictableDecision();
         }
 
+        // Sense incoming Dragonslayer swings within weapon reach (3.8m)
+        float distToPlayer = (perception != null) ? perception.DistanceToPlayer : (player != null ? Vector3.Distance(transform.position, player.position) : 99f);
+        PlayerCombat playerCombat = player != null ? (player.GetComponent<PlayerCombat>() ?? player.GetComponentInParent<PlayerCombat>()) : null;
+        if (playerCombat != null && playerCombat.IsAttacking && distToPlayer <= 3.8f && combat != null)
+        {
+            combat.TryBlock();
+        }
+
         // Main FSM
-        if (playerInAttackRange && playerInSightRange)
-            Attack();
+        if (playerInAttackRange && playerInSightRange){
+            if (combat == null || !combat.IsBlocking){
+                Attack();
+            }
+        }
         else if (playerInSightRange || playerHeard)
             Chase();
         else
@@ -288,7 +299,7 @@ public class EnemyController : MonoBehaviour
     private IEnumerator CreepyStare()
     {
         isStaring = true;
-        agent.isStopped = true;
+        SetAgentStopped(true);
         animator.SetTrigger("walk"); // idle-ish pose
 
         float elapsed = 0f;
@@ -302,7 +313,7 @@ public class EnemyController : MonoBehaviour
             yield return null;
         }
 
-        agent.isStopped = false;
+        SetAgentStopped(false);
         isStaring = false;
         stareRoutine = null;
     }
@@ -314,7 +325,7 @@ public class EnemyController : MonoBehaviour
     private IEnumerator ChargeAttack()
     {
         isCharging = true;
-        agent.isStopped = true;
+        SetAgentStopped(true);
 
         // Wind-up pause — very unsettling
         animator.SetTrigger("walk");
@@ -322,19 +333,24 @@ public class EnemyController : MonoBehaviour
 
         // SCREAM then CHARGE
         PlayRandomClip(screamClips);
-        agent.isStopped = false;
-        agent.speed = chargeSpeed;
+        SetAgentStopped(false);
+        if (agent != null && agent.isActiveAndEnabled &&  agent.isOnNavMesh){
+            agent.speed = chargeSpeed;
+        }
         animator.SetTrigger("run");
 
         float elapsed = 0f;
         while (elapsed < 1.5f)
         {
-            agent.SetDestination(player.position);
+            if (agent != null && agent.isActiveAndEnabled &&  agent.isOnNavMesh){
+                agent.speed = chargeSpeed;
+            }
             elapsed += Time.deltaTime;
             yield return null;
         }
-
-        agent.speed = chaseSpeed;
+        if (agent != null && agent.isActiveAndEnabled &&  agent.isOnNavMesh){
+            agent.speed = chaseSpeed;
+        }
         isCharging = false;
         chargeRoutine = null;
     }
@@ -376,7 +392,7 @@ public class EnemyController : MonoBehaviour
     private void SyncAnimatorStopState()
     {
         stateInfo = animator.GetCurrentAnimatorStateInfo(0);
-        agent.isStopped = stateInfo.IsName("hit_react");
+        SetAgentStopped(stateInfo.IsName("hit_react"));
     }
 
     private void LookAtPlayerSmooth()
@@ -418,6 +434,12 @@ public class EnemyController : MonoBehaviour
                 PlayRandomClip(screamClips);
                 playGroanOnce = false;
             }
+        }
+    }
+
+    private void SetAgentStopped(bool stopped){
+        if(agent != null && agent.isActiveAndEnabled && agent.isOnNavMesh){
+            agent.isStopped = stopped;
         }
     }
 }

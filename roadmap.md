@@ -67,22 +67,22 @@ flowchart TD
   - Decoupled into `EnemyPerception.cs` (110° vision cone, stealth sprint hearing, close-quarters memory latch, investigation tracking).
   - Decoupled into `EnemyCombat.cs` (hit reaction stagger, fake-death revival, Beast feast +20 HP, ragdoll launch).
   - High-quality NavMesh obstacle avoidance with randomized priority (30–70) and horde screech alert propagation (16m).
-- [ ] **3.2 Blade-on-Blade Clashing & Metal Sparks (Conflict Feedback)**
+- [x] **3.2 Blade-on-Blade Clashing & Metal Sparks (Conflict Feedback)** (:white_check_mark: COMPLETED)
   - Real-time blade vs blade & blade vs guard collision detection.
-  - High-velocity directional friction sparks VFX (`Sparks.mat`) at sword contact point.
+  - High-velocity directional friction sparks VFX (`flashEffectPrefab`) at sword contact point.
   - Resonant heavy steel *CLANG* audio design (`sword_clash.wav`).
   - Dual hitstop micro-freeze (0.07s - 0.09s) on both Guts and enemy for massive kinetic resistance.
-  - Camera shudder impulse and deflection weapon bounce.
-- [ ] **3.3 Enemy Self-Defense & Defensive Stances**
-  - Reactive guard posture: raising weapon/shield (`OneHand_Up_Shield_Block_Idle`) when Guts attacks or closes in.
-  - Guard mitigation: 80–90% damage absorption on blocked hits.
-  - Guard impact reaction: heavy block flinch animation (`OneHand_Up_Shield_Block_Hit_1`) with spark burst.
+  - Camera shudder impulse and deflection feedback.
+- [x] **3.3 Enemy Self-Defense & Defensive Stances** (:white_check_mark: CORE COMPLETE)
+  - Replaced hurt flinch with dedicated defensive block deflection (`OneHand_Up_Shield_Block_Hit_1_InPlace`).
+  - Guard mitigation: 85% damage absorption on blocked hits (`damageReductionPercent = 0.85f`).
+  - Real-time weapon deflection sound & sparks.
   - Tactical evasion: defensive backstep hop (`Combat_Dodge_Back`) to escape heavy combo finishers.
-- [ ] **3.4 Multi-Attack Arsenal & Combo Chaining**
-  - **Attack 1 (Light Slash):** Fast horizontal sweep (`attack0` / `OneHand_Up_Attack_1`).
-  - **Attack 2 (Heavy Cleave):** Downward overhead power strike (`Standing_Melee_Attack_Downward` / `OneHand_Up_Attack_2`) with heavy stagger.
-  - **Attack 3 (Lunging Gap-Closer):** Forward lunge thrust / shield bash (`Enemy_Attack_1` / `OneHand_Up_Attack_3`) from 3m away.
-  - Branching 2-hit combo strings and unpredictable attack selection.
+- [x] **3.4 Multi-Attack Arsenal & Combo Chaining** (:white_check_mark: COMPLETED)
+  - **Attack 0 (Light Slash):** Fast horizontal sweep (`attack0.anim`), 0.30s impact window.
+  - **Attack 1 (Heavy Overhead Cleave):** Downward power chop (`OneHand_Up_Attack_2_InPlace.anim`), 1.4x damage, 0.55s windup.
+  - **Attack 2 (Lunging Gap-Closer):** Forward lunge thrust (`OneHand_Up_Attack_3_InPlace.anim`) from 2.5m - 3.2m distance.
+  - Distance-based tactical attack selection & independent damage timing routines.
 - [ ] **3.5 Tactical Combat Brain (Spacing, Circling & Counters)**
   - Orbital combat strafing / circling at 2.5m - 3.5m spacing instead of mindless charging.
   - Distinct visual wind-up tells and audible grunts before heavy strikes.

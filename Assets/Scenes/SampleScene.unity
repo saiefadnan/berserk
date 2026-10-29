@@ -760,6 +760,9 @@ MonoBehaviour:
   dodgeDuration: 0.35
   dodgeCooldown: 0.5
   attackBufferDuration: 0.3
+  clashAudio: {fileID: 0}
+  sparkPrefab: {fileID: 0}
+  combatAudioSource: {fileID: 0}
 --- !u!114 &35385146
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -69412,6 +69415,8 @@ GameObject:
   - component: {fileID: 4537855894445148320}
   - component: {fileID: 4537855894445148319}
   - component: {fileID: 4537855894445148321}
+  - component: {fileID: 4537855894445148323}
+  - component: {fileID: 4537855894445148322}
   m_Layer: 0
   m_Name: enemy
   m_TagString: Enemy
@@ -69751,6 +69756,52 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 478c7ee33731b274fb08f5249a309b6b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RagdollHandler
+--- !u!114 &4537855894445148322
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4537855894445148310}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 660e1918fb60d3444ac56ad74bf7f4cc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyCombat
+  audioSource: {fileID: 4537855894445148315}
+  screamClips:
+  - {fileID: 8300000, guid: 9854d16b4b32d934281245f58941d4c4, type: 3}
+  minDamage: 10
+  maxDamage: 25
+  timeBetweenAttacks: 1.4
+  fakeDeathChance: 0.35
+  blockChance: 0.6
+  blockDuration: 1
+  clashAudio: {fileID: 8300000, guid: 520f25ba244a65b40bec79fa29a2afd8, type: 3}
+  sparkPrefab: {fileID: 7651888310079167479, guid: dab0264fd12e6e448ba5963b74deccfc, type: 3}
+--- !u!114 &4537855894445148323
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4537855894445148310}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 67592a8f2601e834f8a7f7d43be1734b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyPerception
+  sightRange: 18
+  attackRange: 2.2
+  hearingRange: 10
+  viewAngle: 110
+  obstacleMask:
+    serializedVersion: 2
+    m_Bits: 1024
+  whatIsGround:
+    serializedVersion: 2
+    m_Bits: 256
+  player: {fileID: 190267469}
 --- !u!1001 &4592373076977066651
 PrefabInstance:
   m_ObjectHideFlags: 0

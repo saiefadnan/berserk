@@ -11,6 +11,11 @@ public class PlayerCombat : MonoBehaviour{
     [Header("Combo Timing")]
     [SerializeField] private float attackBufferDuration = 0.3f;
 
+    [Header("Clash Feedback")]
+    [SerializeField] private AudioClip clashAudio;
+    [SerializeField] private GameObject sparkPrefab;
+    [SerializeField] private AudioSource combatAudioSource;
+
     // Component References
     private Animator animator;
     private CharacterController characterController;
@@ -46,13 +51,14 @@ public class PlayerCombat : MonoBehaviour{
     public bool CanMove => !IsAttacking && !isGuarding && !isDodging;
 
      private void Awake()
-        {
-            characterController = GetComponent<CharacterController>();
-            animator = GetComponentInChildren<Animator>();
-            healthComponent = GetComponent<Health>();
-            equipWeaponComponent = GetComponentInChildren<EquipWeapon>();
-            playerMovement = GetComponent<PlayerMovement>();
-        }
+    {
+        characterController = GetComponent<CharacterController>();
+        animator = GetComponentInChildren<Animator>();
+        healthComponent = GetComponent<Health>();
+        equipWeaponComponent = GetComponentInChildren<EquipWeapon>();
+        playerMovement = GetComponent<PlayerMovement>();
+
+    }
 
     private void OnEnable()
     {
@@ -109,13 +115,20 @@ public class PlayerCombat : MonoBehaviour{
 
 
     private void HandleDamaged(DamageData data)
+    {
+        if (isGuarding)
         {
-            if (isGuarding)
-            {
-                animator.SetTrigger(GuardHitParam);
-                Debug.Log("<color=yellow>[Combat] BLOCKED! (Dragonslayer absorbed 85% of damage)</color>");
+            animator.SetTrigger(GuardHitParam);
+            Vector3 sparkPoint = (data.hitPoint != Vector3.zero)?data.hitPoint: transform.position + transform.forward + Vector3.up * 1.2f;
+            if (sparkPrefab != null){
+                GameObject spark =  Instantiate(sparkPrefab, sparkPoint, Quaternion.identity);
+                Destroy(spark, 1.5f);
             }
+            if (combatAudioSource != null && clashAudio != null) combatAudioSource.PlayOneShot(clashAudio);
+            if (CameraShake.Instance != null) CameraShake.Instance.Shake(0.16f, 0.22f);
+            Debug.Log("<color=yellow><b>[CLASH] Dragonslayer Parried Blow!</b></color>");
         }
+    }
 
     private void HandleDodge(){
         if (dodgeCooldownTimer > 0)

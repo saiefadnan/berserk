@@ -17,13 +17,24 @@ public class EnemyCombat : MonoBehaviour {
     [Tooltip("Chance (0-1) enemy fakes death then gets back up")]
     public float fakeDeathChance = 0.35f;
 
+    [Header("Blocking Tuning")]
+    [Tooltip("Chance (0-1) enemy blocks when player is attacking")]
+    public float blockChance = 0.3f;
+    public float blockDuration = 1.0f;
+    [SerializeField] private AudioClip clashAudio;
+    [SerializeField] private GameObject sparkPrefab;
+
+
     public bool IsDead => isDead;
     public bool IsFakingDeath => isFakingDeath;
-    public bool CanAttack => !alreadyAttacked && !isDead && !isFakingDeath;
+    public bool CanAttack => !alreadyAttacked && !isDead && !isFakingDeath && !isBlocking;
+    public bool IsBlocking => isBlocking;
 
     private bool alreadyAttacked;
     private bool isDead;
     private bool isFakingDeath;
+    private bool isBlocking;
+    private Coroutine blockCoroutine;
 
     private Health healthComponent;
     private Animator animator;
@@ -49,28 +60,85 @@ public class EnemyCombat : MonoBehaviour {
 
         agent.SetDestination(transform.position);
 
+        // Distance & tactical selection:
+        // dist > 2.2m: Lunging Gap-Closer (attack2)
+        // close range: 60% Light Slash (attack0), 40% Heavy Overhead Cleave (attack1)
+        float dist = Vector3.Distance(transform.position, playerTarget.position);
+        int attackIndex = (dist > 2.2f) ? 2 : (Random.value < 0.6f ? 0 : 1);
 
-            animator.ResetTrigger("run");
-            animator.SetTrigger("attack");
+        animator.ResetTrigger("run");
+        animator.SetInteger("attackIndex", attackIndex);
+        animator.SetTrigger("attack");
 
-            // Deal random damage to the player
-            float dmg = Random.Range(minDamage, maxDamage + 1);
+        StartCoroutine(AttackDamageRoutine(playerTarget, attackIndex));
+
+        alreadyAttacked = true;
+        float cooldown = (attackIndex == 1) ? 1.8f : timeBetweenAttacks;
+        Invoke(nameof(ResetAttack), cooldown);
+    }
+
+    private IEnumerator AttackDamageRoutine(Transform playerTarget, int attackIndex)
+    {
+        // Custom wind-up delay and reach per attack
+        float delay = 0.30f;
+        float reach = 2.5f;
+        float dmg = Random.Range(minDamage, maxDamage + 1);
+
+        if (attackIndex == 1) // Heavy Overhead Cleave
+        {
+            delay = 0.55f;
+            reach = 2.6f;
+            dmg *= 1.4f; // Crushing heavy blow
+        }
+        else if (attackIndex == 2) // Lunging Gap-Closer
+        {
+            delay = 0.40f;
+            reach = 3.2f; // Extended lunge reach
+            dmg *= 1.15f;
+        }
+
+        yield return new WaitForSeconds(delay);
+
+        if (isDead || isFakingDeath || playerTarget == null) yield break;
+
+        float currentDist = Vector3.Distance(transform.position, playerTarget.position);
+        if (currentDist <= reach)
+        {
             IDamageable target = playerTarget.GetComponentInParent<IDamageable>() ?? playerTarget.GetComponent<IDamageable>();
-            AnimatorStateInfo stateinfo = animator.GetCurrentAnimatorStateInfo(0);
-            if(target!=null && stateinfo.IsName("attack0"))
+            if (target != null)
             {
                 DamageData data = new DamageData
                 {
                     amount = dmg,
                     hitDirection = transform.forward,
-                    hitPoint = playerTarget.position,
+                    hitPoint = playerTarget.position + Vector3.up * 1.2f,
                     attacker = gameObject
                 };
                 target.TakeDamage(data);
+                Debug.Log($"<color=orange>[ENEMY ATTACK {attackIndex}] Landed {dmg:F1} damage on Player!</color>");
             }
+        }
+    }
 
-            alreadyAttacked = true;
-            Invoke(nameof(ResetAttack), timeBetweenAttacks);
+    public void TryBlock(){
+        if(isDead || isFakingDeath || isBlocking) return;
+        if (Random.value < blockChance){
+            if(blockCoroutine!=null){
+                StopCoroutine(blockCoroutine);
+            }
+            blockCoroutine = StartCoroutine(BlockRoutine());
+        }
+    }
+
+    private IEnumerator BlockRoutine(){
+        isBlocking = true;
+        if (healthComponent != null) healthComponent.damageReductionPercent = 0.85f; // Mitigate 85% damage!
+        animator.SetTrigger("block");
+
+        yield return new WaitForSeconds(blockDuration);
+        if (healthComponent != null) healthComponent.damageReductionPercent = 0f;
+        isBlocking = false;
+        blockCoroutine = null;
     }
 
     private void OnEnable()
@@ -94,6 +162,14 @@ public class EnemyCombat : MonoBehaviour {
     private void HandleDamaged(DamageData data)
     {
         if (isDead) return;
+
+        if(isBlocking){
+            animator.SetTrigger("block");
+            if (audioSource != null && clashAudio != null)
+                audioSource.PlayOneShot(clashAudio);
+            Debug.Log("<color=yellow><b>[ENEMY BLOCK] Deflected Dragonslayer blow with Shield/Sword Block!</b></color>");
+            return;
+        }
 
         Rigidbody rb = GetComponent<Rigidbody>();
         if (rb != null && !rb.isKinematic)
