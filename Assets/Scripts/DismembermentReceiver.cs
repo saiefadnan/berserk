@@ -149,13 +149,13 @@ public class DismembermentReceiver : MonoBehaviour
         limbBone.localScale = Vector3.zero;
     }
 
-    private void DropEquipment(Vector3 hitDirection)
+    public void DropEquipment(Vector3 hitDirection)
     {
         if (shieldProp != null && shieldProp != leftArmBone?.gameObject) DetachAndLaunchProp(shieldProp, hitDirection * 1.5f + Vector3.up * 1.5f, 4f);
         if (weaponProp != null && weaponProp != rightArmBone?.gameObject) DetachAndLaunchProp(weaponProp, hitDirection * 1.5f + Vector3.up * 1.5f, 4f);
     }
 
-    private void Decapitate(Vector3 hitDirection)
+    public void Decapitate(Vector3 hitDirection)
     {
         // Detach helmet if present (guard against skeleton bone)
         if (helmetProp != null && helmetProp != headBone?.gameObject)

@@ -87,6 +87,7 @@ public class EnemyController : MonoBehaviour
     private PlayerMovement playerMovement;
     private EnemyPerception perception;
     private EnemyCombat combat;
+    private ExecutionTarget executionTarget;
 
     // Limping (below 40% health)
     private bool isLimping;
@@ -130,6 +131,10 @@ public class EnemyController : MonoBehaviour
         if (combat == null){
             combat = gameObject.AddComponent<EnemyCombat>();
         }
+        executionTarget = GetComponent<ExecutionTarget>();
+        if (executionTarget == null){
+            executionTarget = gameObject.AddComponent<ExecutionTarget>();
+        }
     }
 
     // ─────────────────────────────────────────────
@@ -137,7 +142,7 @@ public class EnemyController : MonoBehaviour
     // ─────────────────────────────────────────────
     void Update()
     {
-        if (combat!=null && (combat.IsDead || combat.IsFakingDeath)) return;
+        if ((combat != null && (combat.IsDead || combat.IsFakingDeath)) || (executionTarget != null && (executionTarget.IsStaggered || executionTarget.IsBeingExecuted))) return;
 
         SyncAnimatorStopState();
         //DetectPlayer();

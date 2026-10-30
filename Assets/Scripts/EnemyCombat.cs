@@ -201,8 +201,9 @@ public class EnemyCombat : MonoBehaviour {
                 }
             }
         }
-
-        if (!killedByBeast && !isFakingDeath && Random.value < fakeDeathChance)
+        ExecutionTarget execTarget = GetComponent<ExecutionTarget>();
+        bool isExecuted = execTarget != null && execTarget.IsBeingExecuted;
+        if (!isExecuted && !killedByBeast && !isFakingDeath && Random.value < fakeDeathChance)
         {
             StartCoroutine(FakeDeathRoutine(data.attacker != null ? data.attacker.transform : null));
         }
@@ -250,8 +251,15 @@ public class EnemyCombat : MonoBehaviour {
         float wait = Random.Range(3f, 7f);
         yield return new WaitForSeconds(wait);
 
+        // Fallback: find player if attacker was null
+        if (playerTransform == null)
+        {
+            GameObject playerObj = GameObject.FindWithTag("Player");
+            if (playerObj != null) playerTransform = playerObj.transform;
+        }
+
         // Only get back up if player is nearby
-        if (Vector3.Distance(transform.position, playerTransform.position) < 18f)
+        if (playerTransform != null && Vector3.Distance(transform.position, playerTransform.position) < 18f)
         {
             isFakingDeath = false;
             isDead = false;

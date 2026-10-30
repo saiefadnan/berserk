@@ -50,7 +50,9 @@ public class PlayerCombat : MonoBehaviour{
     public bool IsDodging => isDodging;
     public bool IsShooting => isShooting;
     public bool IsAttacking { get; private set; }
-    public bool CanMove => !IsAttacking && !isGuarding && !isDodging;
+    public bool CanMove => !IsAttacking && !isGuarding && !isDodging && (executionHandler == null || !executionHandler.IsExecuting);
+
+    private ExecutionHandler executionHandler;
 
      private void Awake()
     {
@@ -59,6 +61,7 @@ public class PlayerCombat : MonoBehaviour{
         healthComponent = GetComponent<Health>();
         equipWeaponComponent = GetComponentInChildren<EquipWeapon>();
         playerMovement = GetComponent<PlayerMovement>();
+        executionHandler = GetComponent<ExecutionHandler>();
 
     }
 
@@ -80,6 +83,8 @@ public class PlayerCombat : MonoBehaviour{
 
     private void Update()
         {
+            if (executionHandler != null && executionHandler.IsExecuting) return;
+
             AnimatorStateInfo baseState = animator.GetCurrentAnimatorStateInfo(0);
             AnimatorStateInfo upperState = animator.GetCurrentAnimatorStateInfo(1);
             AnimatorStateInfo nextStateInfo = animator.IsInTransition(0) ? animator.GetNextAnimatorStateInfo(0) : default;
