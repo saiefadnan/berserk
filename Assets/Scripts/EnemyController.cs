@@ -158,7 +158,7 @@ public class EnemyController : MonoBehaviour
         // Sense incoming Dragonslayer swings within weapon reach (3.8m)
         float distToPlayer = (perception != null) ? perception.DistanceToPlayer : (player != null ? Vector3.Distance(transform.position, player.position) : 99f);
         PlayerCombat playerCombat = player != null ? (player.GetComponent<PlayerCombat>() ?? player.GetComponentInParent<PlayerCombat>()) : null;
-        if (playerCombat != null && playerCombat.IsAttacking && distToPlayer <= 3.8f && combat != null)
+        if (playerCombat != null && combat!=null && !combat.IsAttacking && (playerCombat.IsAttacking || playerCombat.IsShooting) && distToPlayer <= 3.8f && combat != null)
         {
             combat.TryBlock();
         }

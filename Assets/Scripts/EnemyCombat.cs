@@ -29,6 +29,7 @@ public class EnemyCombat : MonoBehaviour {
     public bool IsFakingDeath => isFakingDeath;
     public bool CanAttack => !alreadyAttacked && !isDead && !isFakingDeath && !isBlocking;
     public bool IsBlocking => isBlocking;
+    public bool IsAttacking => alreadyAttacked;
 
     private bool alreadyAttacked;
     private bool isDead;
@@ -164,7 +165,6 @@ public class EnemyCombat : MonoBehaviour {
         if (isDead) return;
 
         if(isBlocking){
-            animator.SetTrigger("block");
             if (audioSource != null && clashAudio != null)
                 audioSource.PlayOneShot(clashAudio);
             Debug.Log("<color=yellow><b>[ENEMY BLOCK] Deflected Dragonslayer blow with Shield/Sword Block!</b></color>");

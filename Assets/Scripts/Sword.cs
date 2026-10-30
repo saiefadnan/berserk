@@ -10,6 +10,7 @@ public class Sword : MonoBehaviour
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip hitAudio;
     [SerializeField] private AudioClip slashSound;
+    [SerializeField] private AudioClip[] comboSwingSounds;
     [SerializeField] private AudioClip clashAudio;
     [SerializeField] private AudioClip beastHitAudio;
     [SerializeField] private TrailRenderer swordTrail;
@@ -19,6 +20,14 @@ public class Sword : MonoBehaviour
     private Coroutine hitStopCoroutine;
     private Color defaultTrailStartColor = Color.white;
     private Color defaultTrailEndColor = new Color(1f, 1f, 1f, 0f);
+    private int currentSwingIndex = 0;
+    private float lastSlashAudioTime = -1f;
+
+    private void Awake()
+    {
+        if (audioSource == null)
+            audioSource = GetComponent<AudioSource>() ?? GetComponentInParent<AudioSource>();
+    }
 
     private void Start()
     {
@@ -135,13 +144,46 @@ public class Sword : MonoBehaviour
 
     public void AudioSlash()
     {
-        // if (audioSource != null && slashSound != null)
-        //     audioSource.PlayOneShot(slashSound);
+        PlaySlashSoundInternal();
+    }
+
+    private void PlaySlashSoundInternal()
+    {
+        // Debounce to prevent double-firing if both PlaySlashAudio and EnableDamage/PlaySlashAnim are called
+        if (Time.time - lastSlashAudioTime < 0.15f) return;
+        lastSlashAudioTime = Time.time;
+
+        if (audioSource == null)
+            audioSource = GetComponent<AudioSource>() ?? GetComponentInParent<AudioSource>();
+
+        if (audioSource == null) return;
+
+        BeastOfDarkness beast = transform.root.GetComponent<BeastOfDarkness>();
+        bool isBeastActive = (beast != null && beast.IsActive);
+
+        AudioClip clipToPlay = null;
+        if (comboSwingSounds != null && comboSwingSounds.Length > 0)
+        {
+            clipToPlay = comboSwingSounds[currentSwingIndex % comboSwingSounds.Length];
+            currentSwingIndex = (currentSwingIndex + 1) % comboSwingSounds.Length;
+        }
+        else
+        {
+            clipToPlay = slashSound;
+        }
+
+        if (clipToPlay != null)
+        {
+            // Beast Mode: deeper demonic pitch (0.82-0.88), normal: slight organic pitch nuances (0.96-1.04)
+            audioSource.pitch = isBeastActive ? Random.Range(0.82f, 0.88f) : Random.Range(0.96f, 1.04f);
+            audioSource.PlayOneShot(clipToPlay);
+        }
     }
 
     public void PlayHitAudio(bool isBeast = false)
     {
         if (audioSource == null) return;
+        audioSource.pitch = 1.0f;
 
         if (isBeast && beastHitAudio != null)
         {
@@ -154,8 +196,14 @@ public class Sword : MonoBehaviour
     }
 
     public void PlayClashAudio(){
+        if (audioSource == null)
+            audioSource = GetComponent<AudioSource>() ?? GetComponentInParent<AudioSource>();
+
         if (audioSource != null && clashAudio != null)
+        {
+            audioSource.pitch = 1.0f;
             audioSource.PlayOneShot(clashAudio);
+        }
     }
 
     public void EnableDamage()
@@ -190,8 +238,7 @@ public class Sword : MonoBehaviour
 
     public void AnimateSlash()
     {
-        if (audioSource != null && slashSound != null)
-            audioSource.PlayOneShot(slashSound);
+        PlaySlashSoundInternal();
 
         if (slashEffect != null)
         {

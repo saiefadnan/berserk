@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 [RequireComponent(typeof(Health))]
 public class DismembermentReceiver : MonoBehaviour
@@ -7,8 +8,8 @@ public class DismembermentReceiver : MonoBehaviour
     [SerializeField] private Transform headBone;
     [SerializeField] private Transform leftArmBone;
     [SerializeField] private Transform rightArmBone;
-    [SerializeField] private Transform leftFootBone;
-    [SerializeField] private Transform rightFootBone;
+    [SerializeField] private Transform leftLegBone;
+    [SerializeField] private Transform rightLegBone;
 
     [Header("Equipment Props (Detachable)")]
     [SerializeField] private GameObject helmetProp;
@@ -22,6 +23,7 @@ public class DismembermentReceiver : MonoBehaviour
 
     private Health healthComponent;
     private Animator animator;
+    private readonly HashSet<GameObject> detachedProps = new HashSet<GameObject>();
 
     private void Awake()
     {
@@ -33,8 +35,8 @@ public class DismembermentReceiver : MonoBehaviour
             if (headBone == null) headBone = animator.GetBoneTransform(HumanBodyBones.Head);
             if (leftArmBone == null) leftArmBone = animator.GetBoneTransform(HumanBodyBones.LeftUpperArm);
             if (rightArmBone == null) rightArmBone = animator.GetBoneTransform(HumanBodyBones.RightUpperArm);
-            if (leftFootBone == null) leftFootBone = animator.GetBoneTransform(HumanBodyBones.LeftFoot);
-            if (rightFootBone == null) rightFootBone = animator.GetBoneTransform(HumanBodyBones.RightFoot);
+            if (leftLegBone == null) leftLegBone = animator.GetBoneTransform(HumanBodyBones.LeftLowerLeg);
+            if (rightLegBone == null) rightLegBone = animator.GetBoneTransform(HumanBodyBones.RightLowerLeg);
         }
     }
 
@@ -64,31 +66,41 @@ public class DismembermentReceiver : MonoBehaviour
         float headDist = (headBone != null && hitPoint != default) ? Vector3.Distance(hitPoint, headBone.position) : float.MaxValue;
         float leftArmDist = (leftArmBone != null && hitPoint != default) ? Vector3.Distance(hitPoint, leftArmBone.position) : float.MaxValue;
         float rightArmDist = (rightArmBone != null && hitPoint != default) ? Vector3.Distance(hitPoint, rightArmBone.position) : float.MaxValue;
-        float leftFootDist = (leftFootBone != null && hitPoint != default) ? Vector3.Distance(hitPoint, leftFootBone.position) : float.MaxValue;
-        float rightFootDist = (rightFootBone != null && hitPoint != default) ? Vector3.Distance(hitPoint, rightFootBone.position) : float.MaxValue;
+        float leftLegDist = (leftLegBone != null && hitPoint != default) ? Vector3.Distance(hitPoint, leftLegBone.position) : float.MaxValue;
+        float rightLegDist = (rightLegBone != null && hitPoint != default) ? Vector3.Distance(hitPoint, rightLegBone.position) : float.MaxValue;
 
         bool hitHeadZone = (headBone != null) && (hitPoint == default || hitPoint.y > (headBone.position.y - 0.55f) || (headDist < leftArmDist && headDist < rightArmDist && headDist < 0.6f));
-        bool hitLeftArm = !hitHeadZone && (leftArmBone != null) && (leftArmDist <= rightArmDist) && (leftArmDist < 1.1f);
-        bool hitRightArm = !hitHeadZone && !hitLeftArm && (rightArmBone != null) && (rightArmDist < 1.1f);
-
+        bool hitLeftArm = (leftArmBone != null) && (leftArmDist <= rightArmDist) && (leftArmDist < 1.1f);
+        bool hitRightArm = (rightArmBone != null) && (rightArmDist < 1.1f);
+        bool hitLeftLeg = (leftLegBone != null) && (leftLegDist <= rightLegDist) && (leftLegDist < 1.2f || hitPoint.y < (leftLegBone.position.y + 0.35f));
+        bool hitRightLeg = (rightLegBone != null) && (rightLegDist < 1.2f || hitPoint.y < (rightLegBone.position.y + 0.35f));
         if (hitHeadZone)
         {
             Decapitate(hitDirection);
             DropEquipment(hitDirection * 0.5f);
         }
-        else if (hitLeftArm)
+        if (hitLeftArm)
         {
             SeverLimb(leftArmBone, shieldProp, hitDirection);
             if (weaponProp != null && weaponProp != rightArmBone?.gameObject) DetachAndLaunchProp(weaponProp, hitDirection * 0.5f + Vector3.up * 1f, 3f);
         }
-        else if (hitRightArm)
+        if (hitRightArm)
         {
             SeverLimb(rightArmBone, weaponProp, hitDirection);
             if (shieldProp != null && shieldProp != leftArmBone?.gameObject) DetachAndLaunchProp(shieldProp, hitDirection * 0.5f + Vector3.up * 1f, 3f);
         }
+        if (hitLeftLeg)
+        {
+            SeverLimb(leftLegBone, null, hitDirection);
+            DropEquipment(hitDirection * 0.5f);
+        }
+        if (hitRightLeg)
+        {
+            SeverLimb(rightLegBone, null, hitDirection);
+            DropEquipment(hitDirection * 0.5f);
+        }
         else
         {
-            // Center body cleave: drop equipment
             DropEquipment(hitDirection);
         }
 
@@ -161,6 +173,8 @@ public class DismembermentReceiver : MonoBehaviour
     private void DetachAndLaunchProp(GameObject prop, Vector3 launchVelocity, float torqueForce)
     {
         if (prop == null) return;
+        if(prop.transform.parent == null || detachedProps.Contains(prop)) return;
+        detachedProps.Add(prop);
         SkinnedMeshRenderer smr = prop.GetComponent<SkinnedMeshRenderer>();
         if (smr != null)
         {
@@ -180,11 +194,11 @@ public class DismembermentReceiver : MonoBehaviour
             smr.enabled = false;
             Destroy(smr);
 
-            MeshFilter mf = prop.AddComponent<MeshFilter>();
-            mf.sharedMesh = bakedMesh;
+            MeshFilter mf = prop.GetComponent<MeshFilter>() ?? prop.AddComponent<MeshFilter>();
+            if (mf != null) mf.sharedMesh = bakedMesh;
 
-            MeshRenderer mr = prop.AddComponent<MeshRenderer>();
-            mr.materials = mats;
+            MeshRenderer mr = prop.GetComponent<MeshRenderer>() ?? prop.AddComponent<MeshRenderer>();
+            if (mr != null) mr.materials = mats;
 
             prop.transform.position += prop.transform.TransformDirection(meshCenter);
         }

@@ -28,6 +28,7 @@ public class PlayerCombat : MonoBehaviour{
     private bool isGuarding = false;
     private bool isDodging = false;
     private bool isBackstep = false;
+    private bool isShooting = false;
     private float dodgeTimer = 0f;
     private float dodgeCooldownTimer = 0f;
     private Vector3 dodgeDirection;
@@ -47,6 +48,7 @@ public class PlayerCombat : MonoBehaviour{
     public bool IsEquipped => isEquipped;
     public bool IsGuarding => isGuarding;
     public bool IsDodging => isDodging;
+    public bool IsShooting => isShooting;
     public bool IsAttacking { get; private set; }
     public bool CanMove => !IsAttacking && !isGuarding && !isDodging;
 
@@ -98,8 +100,8 @@ public class PlayerCombat : MonoBehaviour{
         }
 
     private void HandleShoot(){
-        bool rightClick = Input.GetMouseButton(1);
-        animator.SetBool(ShootParam, rightClick && !isEquipped);
+        isShooting = Input.GetMouseButton(1) && !isEquipped;
+        animator.SetBool(ShootParam, isShooting);
     }
 
 

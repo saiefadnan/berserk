@@ -131,7 +131,11 @@ MonoBehaviour:
   bloodEffectPrefab: {fileID: 1000013355911406, guid: d32aa916f50cac94db11e6f19821a58f, type: 3}
   audioSource: {fileID: 8142249806408886888}
   hitAudio: {fileID: 8300000, guid: 06a7557fcc0bde0479039f88998f3842, type: 3}
-  slashSound: {fileID: 8300000, guid: b0d4e4f2481034b408921d0778794e51, type: 3}
+  slashSound: {fileID: 8300000, guid: 11d7f037b68e62e4b8c49426b6487eba, type: 3}
+  comboSwingSounds:
+  - {fileID: 8300000, guid: 11d7f037b68e62e4b8c49426b6487eba, type: 3}
+  - {fileID: 8300000, guid: 5ef0ff4c667eff448a2f1f828251a439, type: 3}
+  - {fileID: 8300000, guid: 459eed7b54f40e949837f1633d7d0cc4, type: 3}
   clashAudio: {fileID: 8300000, guid: 520f25ba244a65b40bec79fa29a2afd8, type: 3}
   beastHitAudio: {fileID: 8300000, guid: 9a19e34b15512704d98fdab1927e561e, type: 3}
   swordTrail: {fileID: 3889870218456909905}
