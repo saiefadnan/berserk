@@ -1,15 +1,20 @@
 using UnityEngine;
 
 public class PlayerCombat : MonoBehaviour{
-    [Header("Dodge Settings")]
+    [Header("Dodge / Roll Settings")]
     [SerializeField] private KeyCode dodgeKey = KeyCode.LeftAlt;
     [SerializeField] private float dodgeSpeed = 12f;
-    [SerializeField] private float dodgeDuration = 0.35f;
+    [SerializeField] private float dodgeDuration = 0.45f;
     [SerializeField] private float dodgeCooldown = 0.5f;
-
 
     [Header("Combo Timing")]
     [SerializeField] private float attackBufferDuration = 0.3f;
+
+    [Header("Attack Step-In Mobility")]
+    [SerializeField] private float attack1LungeSpeed = 3.8f;
+    [SerializeField] private float attack2LungeSpeed = 4.4f;
+    [SerializeField] private float attack3LungeSpeed = 6.2f;
+    [SerializeField] private float dodgeCancelNormalizedTime = 0.50f;
 
     [Header("Clash Feedback")]
     [SerializeField] private AudioClip clashAudio;
@@ -23,7 +28,6 @@ public class PlayerCombat : MonoBehaviour{
     private EquipWeapon equipWeaponComponent;
     private PlayerMovement playerMovement;
 
-
     private bool isEquipped = false;
     private bool isGuarding = false;
     private bool isDodging = false;
@@ -34,7 +38,6 @@ public class PlayerCombat : MonoBehaviour{
     private Vector3 dodgeDirection;
     private float attackBufferTimer = 0f;
 
-
     private static readonly int Attack1Param = Animator.StringToHash("attack1");
     private static readonly int Attack2Param = Animator.StringToHash("attack2");
     private static readonly int Attack3Param = Animator.StringToHash("attack3");
@@ -42,6 +45,7 @@ public class PlayerCombat : MonoBehaviour{
     private static readonly int ShootParam = Animator.StringToHash("shoot");
     private static readonly int IsEquippedParam = Animator.StringToHash("isEquipped");
     private static readonly int DodgeParam = Animator.StringToHash("dodge");
+    private static readonly int DodgeDirParam = Animator.StringToHash("dodge_dir");
     private static readonly int IsGuardingParam = Animator.StringToHash("isGuarding");
     private static readonly int GuardHitParam = Animator.StringToHash("guardHit");
 
@@ -51,10 +55,21 @@ public class PlayerCombat : MonoBehaviour{
     public bool IsShooting => isShooting;
     public bool IsAttacking { get; private set; }
     public bool CanMove => !IsAttacking && !isGuarding && !isDodging && (executionHandler == null || !executionHandler.IsExecuting);
+    public bool CanCancelIntoDodge
+    {
+        get
+        {
+            if (!IsAttacking) return true;
+            if (animator == null) return false;
+            AnimatorStateInfo baseState = animator.GetCurrentAnimatorStateInfo(0);
+            float normTime = baseState.normalizedTime % 1f;
+            return normTime >= dodgeCancelNormalizedTime;
+        }
+    }
 
     private ExecutionHandler executionHandler;
 
-     private void Awake()
+    private void Awake()
     {
         characterController = GetComponent<CharacterController>();
         animator = GetComponentInChildren<Animator>();
@@ -62,14 +77,13 @@ public class PlayerCombat : MonoBehaviour{
         equipWeaponComponent = GetComponentInChildren<EquipWeapon>();
         playerMovement = GetComponent<PlayerMovement>();
         executionHandler = GetComponent<ExecutionHandler>();
-
     }
 
     private void OnEnable()
     {
         if (healthComponent != null)
         {
-                healthComponent.OnDamaged += HandleDamaged;
+            healthComponent.OnDamaged += HandleDamaged;
         }
     }
 
@@ -82,53 +96,74 @@ public class PlayerCombat : MonoBehaviour{
     }
 
     private void Update()
+    {
+        if (executionHandler != null && executionHandler.IsExecuting) return;
+
+        AnimatorStateInfo baseState = animator.GetCurrentAnimatorStateInfo(0);
+        AnimatorStateInfo upperState = animator.GetCurrentAnimatorStateInfo(1);
+        AnimatorStateInfo nextStateInfo = animator.IsInTransition(0) ? animator.GetNextAnimatorStateInfo(0) : default;
+
+        bool inAttack1 = baseState.IsName("attack1") || (animator.IsInTransition(0) && nextStateInfo.IsName("attack1"));
+        bool inAttack2 = baseState.IsName("attack2") || (animator.IsInTransition(0) && nextStateInfo.IsName("attack2"));
+        bool inAttack3 = baseState.IsName("attack3") || (animator.IsInTransition(0) && nextStateInfo.IsName("attack3"));
+        IsAttacking = inAttack1 || inAttack2 || inAttack3;
+
+        HandleEquipToggle(baseState);
+        HandleDodge();
+        HandleGuard();
+        HandleShoot();
+        HandleAttackCombo(inAttack1, inAttack2, inAttack3);
+        HandleAttackLunge(inAttack1, inAttack2, inAttack3, baseState);
+
+        // Sync Upper Layer Weight: seamlessly muted during attacks, guards, and quickstep dodges
+        bool inDodgeState = baseState.IsName("dodge") || (animator.IsInTransition(0) && nextStateInfo.IsName("dodge"));
+        animator.SetLayerWeight(1, (IsAttacking || isGuarding || isDodging || inDodgeState) ? 0f : 1f);
+    }
+
+    private void HandleAttackLunge(bool inAttack1, bool inAttack2, bool inAttack3, AnimatorStateInfo baseState)
+    {
+        if (!IsAttacking || isDodging) return;
+
+        float normTime = baseState.normalizedTime % 1f;
+
+        // Active impulse window: between 8% and 42% of the animation (the forward step into the slash)
+        if (normTime >= 0.08f && normTime <= 0.42f)
         {
-            if (executionHandler != null && executionHandler.IsExecuting) return;
+            float peakSpeed = inAttack3 ? attack3LungeSpeed : (inAttack2 ? attack2LungeSpeed : attack1LungeSpeed);
+            // Ease-out curve: explosive forward step that settles as the blade makes impact
+            float progress = Mathf.InverseLerp(0.08f, 0.42f, normTime);
+            float currentSpeed = peakSpeed * (1f - (progress * progress));
 
-            AnimatorStateInfo baseState = animator.GetCurrentAnimatorStateInfo(0);
-            AnimatorStateInfo upperState = animator.GetCurrentAnimatorStateInfo(1);
-            AnimatorStateInfo nextStateInfo = animator.IsInTransition(0) ? animator.GetNextAnimatorStateInfo(0) : default;
-
-            bool inAttack1 = baseState.IsName("attack1") || (animator.IsInTransition(0) && nextStateInfo.IsName("attack1"));
-            bool inAttack2 = baseState.IsName("attack2") || (animator.IsInTransition(0) && nextStateInfo.IsName("attack2"));
-            bool inAttack3 = baseState.IsName("attack3") || (animator.IsInTransition(0) && nextStateInfo.IsName("attack3"));
-            IsAttacking = inAttack1 || inAttack2 || inAttack3;
-
-            HandleEquipToggle(baseState);
-            HandleDodge();
-            HandleGuard();
-            HandleShoot();
-            HandleAttackCombo(inAttack1, inAttack2, inAttack3);
-
-            // Sync Upper Layer Weight: 0 during attacks/guard/dodge, 1 during locomotion sword carry
-            animator.SetLayerWeight(1, (IsAttacking || isGuarding || isDodging) ? 0f : 1f);
+            Vector3 forwardMove = transform.forward * (currentSpeed * Time.deltaTime);
+            characterController.Move(forwardMove);
         }
+    }
 
-    private void HandleShoot(){
+    private void HandleShoot()
+    {
         isShooting = Input.GetMouseButton(1) && !isEquipped;
         animator.SetBool(ShootParam, isShooting);
     }
 
-
     private void HandleEquipToggle(AnimatorStateInfo baseState)
+    {
+        if (Input.GetKeyDown(KeyCode.E) && !baseState.IsName("equip"))
         {
-            if (Input.GetKeyDown(KeyCode.E) && !baseState.IsName("equip"))
-            {
-                isEquipped = !isEquipped;
-                animator.SetTrigger(EquipParam);
-                animator.SetBool(IsEquippedParam, isEquipped);
-            }
+            isEquipped = !isEquipped;
+            animator.SetTrigger(EquipParam);
+            animator.SetBool(IsEquippedParam, isEquipped);
         }
-
+    }
 
     private void HandleDamaged(DamageData data)
     {
         if (isGuarding)
         {
             animator.SetTrigger(GuardHitParam);
-            Vector3 sparkPoint = (data.hitPoint != Vector3.zero)?data.hitPoint: transform.position + transform.forward + Vector3.up * 1.2f;
-            if (sparkPrefab != null){
-                GameObject spark =  Instantiate(sparkPrefab, sparkPoint, Quaternion.identity);
+            Vector3 sparkPoint = (data.hitPoint != Vector3.zero) ? data.hitPoint : transform.position + transform.forward + Vector3.up * 1.2f;
+            if (sparkPrefab != null)
+            {
+                GameObject spark = Instantiate(sparkPrefab, sparkPoint, Quaternion.identity);
                 Destroy(spark, 1.5f);
             }
             if (combatAudioSource != null && clashAudio != null) combatAudioSource.PlayOneShot(clashAudio);
@@ -137,11 +172,13 @@ public class PlayerCombat : MonoBehaviour{
         }
     }
 
-    private void HandleDodge(){
+    private void HandleDodge()
+    {
         if (dodgeCooldownTimer > 0)
         {
             dodgeCooldownTimer -= Time.deltaTime;
         }
+
         if (isDodging)
         {
             dodgeTimer -= Time.deltaTime;
@@ -152,18 +189,21 @@ public class PlayerCombat : MonoBehaviour{
             }
 
             float speedFactor = Mathf.Clamp01(dodgeTimer / dodgeDuration);
-            float currentDodgeSpeed = (isBackstep ? dodgeSpeed * 0.7f : dodgeSpeed) * Mathf.Sqrt(speedFactor);
+            // Explosive initial skid impulse that rapidly decelerates as boots brake on the ground
+            float currentDodgeSpeed = (isBackstep ? dodgeSpeed * 0.85f : dodgeSpeed) * Mathf.Pow(speedFactor, 1.35f);
             Vector3 dodgeVelocity = currentDodgeSpeed * dodgeDirection;
             characterController.Move(dodgeVelocity * Time.deltaTime);
         }
 
-        if (Input.GetKeyDown(dodgeKey) && !isDodging && dodgeCooldownTimer <= 0 && CanMove)
+        // Allowed to dodge from neutral OR by cancelling the recovery frames of an attack
+        bool canInitiateDodge = (!IsAttacking || CanCancelIntoDodge) && !isGuarding && (executionHandler == null || !executionHandler.IsExecuting);
+
+        if (Input.GetKeyDown(dodgeKey) && !isDodging && dodgeCooldownTimer <= 0 && canInitiateDodge)
         {
             isDodging = true;
             if (healthComponent != null) healthComponent.isInvulnerable = true;
             dodgeTimer = dodgeDuration;
             dodgeCooldownTimer = dodgeCooldown;
-            animator.SetTrigger(DodgeParam);
 
             Vector3 forward = transform.forward;
             Vector3 right = transform.right;
@@ -180,6 +220,13 @@ public class PlayerCombat : MonoBehaviour{
                 isBackstep = true;
             }
 
+            // Directional Quickstep Blend: -1 for Backstep hop, +1 for Forward/Lateral combat skid
+            animator.SetFloat(DodgeDirParam, isBackstep ? -1f : 1f);
+            animator.SetTrigger(DodgeParam);
+
+            // Visceral kick
+            if (CameraShake.Instance != null) CameraShake.Instance.Shake(0.09f, 0.12f);
+
             attackBufferTimer = 0;
             animator.ResetTrigger(Attack1Param);
             animator.ResetTrigger(Attack2Param);
@@ -187,7 +234,8 @@ public class PlayerCombat : MonoBehaviour{
         }
     }
 
-    private void HandleGuard(){
+    private void HandleGuard()
+    {
         bool rightClick = Input.GetMouseButton(1);
         isGuarding = IsEquipped && rightClick && !isDodging && !IsAttacking;
         if (healthComponent != null)
@@ -202,8 +250,9 @@ public class PlayerCombat : MonoBehaviour{
         }
     }
 
-    private void HandleAttackCombo(bool inAttack1, bool inAttack2, bool inAttack3){
-          if (attackBufferTimer > 0)
+    private void HandleAttackCombo(bool inAttack1, bool inAttack2, bool inAttack3)
+    {
+        if (attackBufferTimer > 0)
         {
             attackBufferTimer -= Time.deltaTime;
         }
@@ -237,6 +286,4 @@ public class PlayerCombat : MonoBehaviour{
             }
         }
     }
-
-
 }

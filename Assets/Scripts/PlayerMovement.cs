@@ -99,7 +99,6 @@ public class PlayerMovement : MonoBehaviour
                 var angle = Mathf.SmoothDampAngle(figure.transform.eulerAngles.y, targetAngle, ref _currentVelocity, smoothTime);
                 figure.transform.rotation = Quaternion.Euler(0.0f, angle, 0.0f);
                 StopFootStep();
-                stepRunning = false;
             }
 
         }
@@ -112,7 +111,7 @@ public class PlayerMovement : MonoBehaviour
         {
             var targetAngle = Mathf.Atan2(moveDirection.x, moveDirection.z) * Mathf.Rad2Deg;
             FaceAngle(targetAngle);
-            HandleFootSteps(baseState);
+            HandleFootSteps();
         }
         else
         {
@@ -150,12 +149,12 @@ public class PlayerMovement : MonoBehaviour
         }
 
     }
-    private void HandleFootSteps(AnimatorStateInfo baseState){
+    private void HandleFootSteps(){
         if (!characterController.isGrounded && !combat.IsAttacking)
         {
             StopFootStep();
         }
-        else if (!stepRunning)
+        else
         {
             PlayFootStep();
         }
@@ -180,6 +179,10 @@ public class PlayerMovement : MonoBehaviour
 
     private void PlayFootStep()
     {
+        if(footAudioSrc.isPlaying){
+            footAudioSrc.pitch = isRunning ? 1.6f : 1.0f;
+            return;
+        }
         footAudioSrc.clip = footStep;
         footAudioSrc.loop = true;
         footAudioSrc.Play();

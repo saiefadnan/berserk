@@ -82,3 +82,9 @@ desktop.ini
 /[Aa]ssets/_Recovery/
 Screenshot*.png
 
+# Staging, archives & conversion tools
+*.rar
+Berserker_Staging/
+tools/
+
+

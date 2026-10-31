@@ -7,6 +7,7 @@ public class ExecutionHandler : MonoBehaviour
     [Header("Execution Settings")]
     [SerializeField] private KeyCode executionKey = KeyCode.F;
     [SerializeField] private float executionRange = 2.8f;
+    [SerializeField] private float sweetSpotDistance = 1.4f;
     [SerializeField] private float terrorRadius = 6.5f;
 
     [Header("Audio (Optional)")]
@@ -20,6 +21,7 @@ public class ExecutionHandler : MonoBehaviour
     private BeastOfDarkness beast;
     private PlayerCombat combat;
     private CharacterController characterController;
+    private PlayerMovement playerMovement;
 
     private void Awake()
     {
@@ -27,6 +29,7 @@ public class ExecutionHandler : MonoBehaviour
         health = GetComponent<Health>();
         beast = GetComponent<BeastOfDarkness>();
         combat = GetComponent<PlayerCombat>();
+        playerMovement = GetComponent<PlayerMovement>();
         characterController = GetComponent<CharacterController>();
         if (audioSource == null) audioSource = GetComponent<AudioSource>();
     }
@@ -76,6 +79,7 @@ public class ExecutionHandler : MonoBehaviour
     private IEnumerator ExecuteRoutine(ExecutionTarget target)
     {
         IsExecuting = true;
+        if (playerMovement != null) playerMovement.enabled = false;
 
         // 1. Align Guts with the kneeling target
         Vector3 dirToTarget = (target.transform.position - transform.position);
@@ -83,6 +87,16 @@ public class ExecutionHandler : MonoBehaviour
         if (dirToTarget != Vector3.zero)
         {
             transform.rotation = Quaternion.LookRotation(dirToTarget);
+            Vector3 sweetSpot = target.transform.position - (dirToTarget.normalized * sweetSpotDistance);
+            sweetSpot.y = transform.position.y;
+            if (characterController != null) characterController.enabled = false;
+            transform.position = sweetSpot;
+            if (characterController != null)characterController.enabled = true;
+        }
+
+        Camera cam = Camera.main;
+        if (cam != null){
+            StartCoroutine(CinematicCameraSequence(cam, target.transform, cam.fieldOfView));
         }
 
         // 2. Trigger Guts Great Sword Downward Cleave
@@ -131,7 +145,7 @@ public class ExecutionHandler : MonoBehaviour
 
         // 7. Follow-through recovery
         yield return new WaitForSeconds(0.65f);
-
+        if (playerMovement != null) playerMovement.enabled = true;
         IsExecuting = false;
     }
 
@@ -169,5 +183,54 @@ public class ExecutionHandler : MonoBehaviour
         {
             agent.isStopped = false;
         }
+    }
+
+    private IEnumerator CinematicCameraSequence(Camera cam, Transform targetEnemy, float originalFOV){
+        Vector3 initialLocalPos = cam.transform.localPosition;
+        Quaternion initialLocalRot = cam.transform.localRotation;
+
+        Vector3 rightOffset = transform.right * 1.5f + Vector3.up * 0.9f - transform.forward * 1.8f;
+        Vector3 cinematicWorldPos = transform.position + rightOffset;
+        Vector3 lookTarget = (transform.position + targetEnemy.position) * 0.5f + Vector3.up * 1.1f;
+        Quaternion cinematicWorldRot = Quaternion.LookRotation(lookTarget - cinematicWorldPos);
+
+        float elapsed = 0f;
+        float transitionIn = 0.22f;
+        Vector3 startWorldPos = cam.transform.position;
+        Quaternion startWorldRot = cam.transform.rotation;
+
+        while(elapsed < transitionIn){
+            elapsed += Time.unscaledDeltaTime;
+            float t = Mathf.SmoothStep(0f, 1f, elapsed / transitionIn);
+            cam.transform.position = Vector3.Lerp(cam.transform.position, cinematicWorldPos, t);
+            cam.transform.rotation = Quaternion.Slerp(startWorldRot, cinematicWorldRot, t);
+            cam.fieldOfView = Mathf.Lerp(originalFOV, 46f, t);
+            yield return null;
+        }
+        yield return new WaitForSecondsRealtime(1f);
+
+        elapsed = 0f;
+        float transitionOut = 0.35f;
+        Vector3 returnStartPos = cam.transform.position;
+        Quaternion returnStartRot = cam.transform.rotation;
+
+        while(elapsed < transitionOut){
+            elapsed += Time.unscaledDeltaTime;
+            float t = Mathf.SmoothStep(0f, 1f, elapsed / transitionOut);
+            Vector3 targetWorldPos = cam.transform.parent != null ?
+            cam.transform.parent.TransformPoint(initialLocalPos)
+            : returnStartPos;
+            Quaternion targetWorldRot = cam.transform.parent != null ?
+            cam.transform. parent.rotation * initialLocalRot
+            : returnStartRot;
+            cam.transform.position = Vector3.Lerp(returnStartPos, targetWorldPos, t);
+            cam.transform.rotation = Quaternion.Slerp(returnStartRot, targetWorldRot, t);
+            cam.fieldOfView = Mathf.Lerp(46f, originalFOV, t);
+            yield return null;
+        }
+
+        cam.transform.localPosition = initialLocalPos;
+        cam.transform.localRotation = initialLocalRot;
+        cam.fieldOfView = originalFOV;
     }
 }
