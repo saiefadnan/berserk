@@ -20,6 +20,10 @@ public class EquipWeapon : MonoBehaviour
     private readonly Vector3 guardLocalPos = new Vector3(0.61f, -0.38f, 0.78f);
     private readonly Quaternion guardLocalRot = Quaternion.Euler(298.64f, 199.55f, 347.32f);
 
+    [Header("Holster Alignment (Back / Shoulder)")]
+    private readonly Vector3 unequippedLocalPos = new Vector3(-0.224f, 0.63f, 0.9f);
+    private readonly Quaternion unequippedLocalRot = Quaternion.Euler(118.686f, -18.4899f, -105.44f);
+
     [Header("Two-Handed IK")]
     [SerializeField] private float ikSmoothSpeed = 12f;
     private float currentIKWeight = 0f;
@@ -31,14 +35,28 @@ public class EquipWeapon : MonoBehaviour
     private bool isAttacking = false;
     private bool wasAttacking = false;
 
+    private void Awake()
+    {
+        equip = false;
+    }
+
     void Start()
     {
-        currUnequipped = Instantiate(weapon, unequipped.transform);
-        currEquipped = Instantiate(weapon, equipped.transform);
+        equip = false;
+        currUnequipped = (unequipped != null && unequipped.transform.childCount > 0) ? unequipped.transform.GetChild(0).gameObject : Instantiate(weapon, unequipped.transform);
+        currEquipped = (equipped != null && equipped.transform.childCount > 0) ? equipped.transform.GetChild(0).gameObject : Instantiate(weapon, equipped.transform);
+
+        if (currUnequipped != null)
+        {
+            currUnequipped.transform.localPosition = unequippedLocalPos;
+            currUnequipped.transform.localRotation = unequippedLocalRot;
+        }
+
         currEquipped.SetActive(false);
         currUnequipped.SetActive(true);
         sword = currEquipped.GetComponentInChildren<Sword>();
-        shootingMechaComponent = shootingMechanism.GetComponent<ShootMecha>();
+        if (shootingMechanism != null)
+            shootingMechaComponent = shootingMechanism.GetComponent<ShootMecha>();
         animator = GetComponent<Animator>();
         if (currEquipped != null)
         {
@@ -47,10 +65,10 @@ public class EquipWeapon : MonoBehaviour
             {
                 GameObject gripGo = new GameObject("LeftHandGrip");
                 gripGo.transform.SetParent(currEquipped.transform, false);
-                gripGo.transform.localPosition = new Vector3(0.00090f, 0.00004f, 0.00148f);
-                gripGo.transform.localRotation = Quaternion.identity;
                 leftHandGripPoint = gripGo.transform;
             }
+            leftHandGripPoint.localPosition = new Vector3(0.00089f, -0.00085f, 0.00145f);
+            leftHandGripPoint.localRotation = Quaternion.identity;
         }
     }
 
@@ -74,7 +92,7 @@ public class EquipWeapon : MonoBehaviour
         {
             animator.SetIKPositionWeight(AvatarIKGoal.LeftHand, currentIKWeight);
             animator.SetIKPosition(AvatarIKGoal.LeftHand, leftHandGripPoint.position);
-            animator.SetIKRotationWeight(AvatarIKGoal.LeftHand, currentIKWeight);
+            animator.SetIKRotationWeight(AvatarIKGoal.LeftHand, 0f);
             animator.SetIKRotation(AvatarIKGoal.LeftHand, leftHandGripPoint.rotation);
         }
         else
@@ -123,7 +141,8 @@ public class EquipWeapon : MonoBehaviour
 
         currEquipped.SetActive(equip);
         currUnequipped.SetActive(!equip);
-        shootingMechaComponent.enabled = !equip;
+        if (shootingMechaComponent != null)
+            shootingMechaComponent.enabled = !equip;
     }
 
     void PlaySlashAudio()

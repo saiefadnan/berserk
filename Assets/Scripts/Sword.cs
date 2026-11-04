@@ -185,11 +185,11 @@ public class Sword : MonoBehaviour
         if (audioSource == null) return;
         audioSource.pitch = 1.0f;
 
-        if (isBeast && beastHitAudio != null)
+        if (isBeast && beastHitAudio != null && audioSource.clip != beastHitAudio1)
         {
             audioSource.PlayOneShot(beastHitAudio);
         }
-        else if (hitAudio != null)
+        else if (hitAudio != null && audioSource.clip != hitAudio)
         {
             audioSource.PlayOneShot(hitAudio);
         }

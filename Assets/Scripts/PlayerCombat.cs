@@ -11,9 +11,9 @@ public class PlayerCombat : MonoBehaviour{
     [SerializeField] private float attackBufferDuration = 0.3f;
 
     [Header("Attack Step-In Mobility")]
-    [SerializeField] private float attack1LungeSpeed = 3.8f;
-    [SerializeField] private float attack2LungeSpeed = 4.4f;
-    [SerializeField] private float attack3LungeSpeed = 6.2f;
+    [SerializeField] private float attack1LungeSpeed = 0.76f;
+    [SerializeField] private float attack2LungeSpeed = 0.88f;
+    [SerializeField] private float attack3LungeSpeed = 1.24f;
     [SerializeField] private float dodgeCancelNormalizedTime = 0.50f;
 
     [Header("Clash Feedback")]
