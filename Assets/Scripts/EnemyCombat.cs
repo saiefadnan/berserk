@@ -132,6 +132,7 @@ public class EnemyCombat : MonoBehaviour {
 
     public void TryBlock(){
         if(isDead || isFakingDeath || isBlocking) return;
+         if (animator != null && animator.GetCurrentAnimatorStateInfo(0).IsName("hit_react")) return;
         if (Random.value < blockChance){
             if(blockCoroutine!=null){
                 StopCoroutine(blockCoroutine);
@@ -176,6 +177,13 @@ public class EnemyCombat : MonoBehaviour {
         if(isBlocking){
             if (audioSource != null && clashAudio != null)
                 audioSource.PlayOneShot(clashAudio);
+
+            if (data.reactionType == HitReactionType.SwordKnockdown){
+                isBlocking = false;
+                if (blockCoroutine != null) StopCoroutine(blockCoroutine);
+                TriggerKnockdown(data);
+                return;
+            }
             Debug.Log("<color=yellow><b>[ENEMY BLOCK] Deflected Dragonslayer blow with Shield/Sword Block!</b></color>");
             return;
         }
@@ -186,7 +194,7 @@ public class EnemyCombat : MonoBehaviour {
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
         }
-        if(data.reactionType == HitReactionType.Knockdown){
+        if(data.reactionType == HitReactionType.SwordKnockdown){
             TriggerKnockdown(data);
         }else{
             animator.SetTrigger("hit_react");
@@ -230,7 +238,7 @@ public class EnemyCombat : MonoBehaviour {
             elapsed += Time.deltaTime;
             yield return null;
         }
-        yield return new WaitForSeconds(2.2f);
+        yield return new WaitForSeconds(5.2f);
         if (!isDead && !isFakingDeath){
             if(agent!=null && agent.enabled){
                 agent.isStopped = true;
@@ -238,6 +246,7 @@ public class EnemyCombat : MonoBehaviour {
             }
         }
         knockdownRoutine = null;
+        isKnockedDown = false;
     }
 
     private void HandleDeath(DamageData data)

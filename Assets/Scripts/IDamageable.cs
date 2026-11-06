@@ -1,9 +1,10 @@
 using UnityEngine;
 
 public enum HitReactionType{
-    Light,
-    Medium,
-    Knockdown
+    SwordLight,
+    SwordMedium,
+    SwordKnockdown,
+    CannonballKnockdown
 }
 
 public struct DamageData {

@@ -83,22 +83,22 @@ public class Sword : MonoBehaviour
             bool inAttack3 = baseState.IsName("attack3");
             bool inAttack2 = baseState.IsName("attack2");
 
-            HitReactionType reaction = HitReactionType.Light;
+            HitReactionType reaction = HitReactionType.SwordLight;
             float knockback = 2.0f;
 
             if (inAttack3 || isBeastActive)
             {
-                reaction = HitReactionType.Knockdown;
+                reaction = HitReactionType.SwordKnockdown;
                 knockback = isBeastActive ? 9.0f : 6.5f;
             }
             else if (inAttack2)
             {
-                reaction = HitReactionType.Medium;
+                reaction = HitReactionType.SwordMedium;
                 knockback = 4.0f;
             }
             else
             {
-                reaction = HitReactionType.Light;
+                reaction = HitReactionType.SwordLight;
                 knockback = 2.0f;
             }
 

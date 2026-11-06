@@ -89,7 +89,7 @@ public class ExecutionTarget : MonoBehaviour
     private void HandleDamaged(DamageData data)
     {
         if (health.IsDead || health.CurrentHealth <= 0f || IsStaggered || IsBeingExecuted) return;
-
+        if(data.reactionType == HitReactionType.CannonballKnockdown) return;
         // Check if HP reached execution threshold
         if (!hasStaggeredOnce && health.CurrentHealth <= (health.MaxHealth * executionHealthThreshold))
         {

@@ -302,7 +302,7 @@ public class EnemyController : MonoBehaviour
         }
 
         LookAtPlayerSmooth();
-        animator.SetTrigger("walk");
+        animator.SetTrigger("run");
     }
 
     // ─────────────────────────────────────────────
