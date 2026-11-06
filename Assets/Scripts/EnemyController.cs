@@ -44,6 +44,14 @@ public class EnemyController : MonoBehaviour
     public float patrolSpeed = 1.2f;
     public float chaseSpeed = 4.5f;
     public float chargeSpeed = 8f;     // lunge speed
+
+    [Header("Tactical Circling")]
+    public float combatZoneRadius = 4f;
+    public float orbitRadius = 3.2f;
+    public float strafeSpeed = 2.0f;
+    private int strafeDir = 1;
+    private float strafeTimer = 0f;
+
     // ─────────────────────────────────────────────
     //  BEHAVIOUR TUNING
     // ─────────────────────────────────────────────
@@ -169,9 +177,17 @@ public class EnemyController : MonoBehaviour
         }
 
         // Main FSM
-        if (playerInAttackRange && playerInSightRange){
-            if (combat == null || !combat.IsBlocking){
-                Attack();
+        if(distToPlayer <= combatZoneRadius){
+            if (combat != null && combat.RequestAttackPermission()){
+                if (combat == null || !combat.IsBlocking){
+                    if (playerInAttackRange && playerInSightRange){
+                        Attack();
+                    }else{
+                        Chase();
+                    }
+                }
+            }else{
+                OrbitPlayer();
             }
         }
         else if (playerInSightRange || playerHeard)
@@ -261,6 +277,32 @@ public class EnemyController : MonoBehaviour
 
         LookAtPlayerSmooth();
         animator.SetTrigger("run");
+    }
+
+
+    private void OrbitPlayer(){
+        if(player == null) return;
+        if(combat!=null && combat.IsAttacking) return;
+
+        strafeTimer -= Time.deltaTime;
+        if(strafeTimer <= 0f){
+            strafeDir = (Random.value < 0.5f) ? 1 : -1;
+            strafeTimer = Random.Range(2.5f, 4.5f);
+        }
+
+        Vector3 toPlayer = player.position - transform.position;
+        toPlayer.y = 0f;
+        Vector3 dirToPlayer = toPlayer.normalized;
+        Vector3 tangent = Vector3.Cross(Vector3.up, dirToPlayer) * strafeDir;
+        Vector3 desiredPos = player.position - (dirToPlayer * orbitRadius) + (tangent * 1.8f);
+
+        if(NavMesh.SamplePosition(desiredPos, out NavMeshHit hit, 2.5f, NavMesh.AllAreas)){
+            agent.speed = strafeSpeed;
+            agent.SetDestination(hit.position);
+        }
+
+        LookAtPlayerSmooth();
+        animator.SetTrigger("walk");
     }
 
     // ─────────────────────────────────────────────

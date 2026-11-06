@@ -8,7 +8,7 @@ public class EnemyPerception : MonoBehaviour{
 
     [Header("Ranges")]
     public float sightRange = 18f;
-    public float attackRange = 2.2f;
+    public float attackRange = 1.2f;
     public float hearingRange = 10f;
 
     [Header("Vision Cone & Obstacles")]

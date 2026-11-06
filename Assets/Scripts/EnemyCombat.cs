@@ -81,6 +81,12 @@ public class EnemyCombat : MonoBehaviour {
         Invoke(nameof(ResetAttack), cooldown);
     }
 
+
+    public bool RequestAttackPermission(){
+        if (!CanAttack) return false;
+        if (CombatDirector.Instance == null) return true;
+        return CombatDirector.Instance.RequestAttackToken(this);
+    }
     private IEnumerator AttackDamageRoutine(Transform playerTarget, int attackIndex)
     {
         // Custom wind-up delay and reach per attack
@@ -196,6 +202,9 @@ public class EnemyCombat : MonoBehaviour {
             StopCoroutine(knockdownRoutine);
         }
         knockdownRoutine = StartCoroutine(KnockdownRoutine(data));
+        if (CombatDirector.Instance != null){
+            CombatDirector.Instance.ReleaseAttackToken(this);
+        }
     }
 
     private IEnumerator KnockdownRoutine(DamageData data){
@@ -264,7 +273,13 @@ public class EnemyCombat : MonoBehaviour {
         }
     }
 
-    private void ResetAttack() => alreadyAttacked = false;
+    private void ResetAttack(){
+        alreadyAttacked = false;
+        if (CombatDirector.Instance != null){
+            CombatDirector.Instance.ReleaseAttackToken(this);
+        }
+    }
+
     // ─────────────────────────────────────────────
     //  DEATH
     // ─────────────────────────────────────────────
@@ -279,6 +294,9 @@ public class EnemyCombat : MonoBehaviour {
         if (ragdollHandler != null)
         {
             ragdollHandler.TriggerRagdoll(hitDirection, forceMultiplier);
+        }
+        if (CombatDirector.Instance != null){
+            CombatDirector.Instance.ReleaseAttackToken(this);
         }
         Invoke(nameof(DestroyEnemy), 10f);
     }
