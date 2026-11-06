@@ -73,7 +73,34 @@ public class Sword : MonoBehaviour
                 PlayHitAudio(isBeastActive);
             }
 
-            Vector3 slashDirection = transform.forward;
+            Vector3 pushDirection = (other.transform.position - transform.root.position);
+            pushDirection.y = 0f;
+            if (pushDirection.sqrMagnitude > 0.001f) pushDirection.Normalize();
+            else pushDirection = transform.root.forward;
+
+            // Determine attack tier from player animator
+            AnimatorStateInfo baseState = (animator != null) ? animator.GetCurrentAnimatorStateInfo(0) : default;
+            bool inAttack3 = baseState.IsName("attack3");
+            bool inAttack2 = baseState.IsName("attack2");
+
+            HitReactionType reaction = HitReactionType.Light;
+            float knockback = 2.0f;
+
+            if (inAttack3 || isBeastActive)
+            {
+                reaction = HitReactionType.Knockdown;
+                knockback = isBeastActive ? 9.0f : 6.5f;
+            }
+            else if (inAttack2)
+            {
+                reaction = HitReactionType.Medium;
+                knockback = 4.0f;
+            }
+            else
+            {
+                reaction = HitReactionType.Light;
+                knockback = 2.0f;
+            }
 
             float finalDamage = damage;
             if (isBeastActive)
@@ -93,16 +120,18 @@ public class Sword : MonoBehaviour
             DamageData data = new DamageData
             {
                 amount = finalDamage,
-                hitDirection = slashDirection,
+                hitDirection = pushDirection,
                 hitPoint = hitPoint,
-                attacker = transform.root.gameObject
+                attacker = transform.root.gameObject,
+                reactionType = reaction,
+                knockbackForce = knockback
             };
 
             damageable.TakeDamage(data);
             if (CameraShake.Instance != null)
             {
-                if (isBeastActive)
-                        CameraShake.Instance.Shake(0.24f, 0.40f); //Massive screen shudder!!
+                if (inAttack3 || isBeastActive)
+                    CameraShake.Instance.Shake(0.24f, 0.40f); // Massive screen shudder on heavy cleave!!
                 else
                     CameraShake.Instance.Shake(0.16f, 0.20f);
             }

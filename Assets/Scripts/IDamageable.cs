@@ -1,10 +1,18 @@
 using UnityEngine;
 
+public enum HitReactionType{
+    Light,
+    Medium,
+    Knockdown
+}
+
 public struct DamageData {
     public float amount;
     public Vector3 hitPoint;
     public Vector3 hitDirection;
     public GameObject attacker;
+    public HitReactionType reactionType;
+    public float knockbackForce;
 }
 
 public enum SurfaceType{

@@ -13,7 +13,7 @@ public class PlayerCombat : MonoBehaviour{
     [Header("Attack Step-In Mobility")]
     [SerializeField] private float attack1LungeSpeed = 0.76f;
     [SerializeField] private float attack2LungeSpeed = 0.88f;
-    [SerializeField] private float attack3LungeSpeed = 1.24f;
+    [SerializeField] private float attack3LungeSpeed = 2.8f;
     [SerializeField] private float dodgeCancelNormalizedTime = 0.50f;
 
     [Header("Clash Feedback")]

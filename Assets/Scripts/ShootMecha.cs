@@ -33,7 +33,8 @@ public class ShootMecha : MonoBehaviour
     public float drag = 0.05f;
     public float increment = 0.05f;
     public int maxpoints = 30;
-    public float rayOverlap = 1.1f;
+    public float rayOverlap = 0.05f;
+    public float projectileRadius = 0.25f;
 
     private bool isAiming;
     private bool isAimActive;
@@ -142,7 +143,7 @@ public class ShootMecha : MonoBehaviour
             Vector3 nextPos = position + velocity * increment;
 
             float overlap = Vector3.Distance(position, nextPos) * rayOverlap;
-            if (Physics.Raycast(position, velocity.normalized, out RaycastHit hit, overlap))
+            if (Physics.SphereCast(position, projectileRadius, velocity.normalized, out RaycastHit hit, overlap))
             {
                 trajectoryLine.positionCount = pointIndex + 1;
                 trajectoryLine.SetPosition(pointIndex, hit.point);

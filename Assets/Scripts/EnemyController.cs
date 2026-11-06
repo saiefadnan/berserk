@@ -142,7 +142,7 @@ public class EnemyController : MonoBehaviour
     // ─────────────────────────────────────────────
     void Update()
     {
-        if ((combat != null && (combat.IsDead || combat.IsFakingDeath)) || (executionTarget != null && (executionTarget.IsStaggered || executionTarget.IsBeingExecuted))) return;
+        if ((combat != null && (combat.IsDead || combat.IsFakingDeath || combat.IsKnockedDown)) || (executionTarget != null && (executionTarget.IsStaggered || executionTarget.IsBeingExecuted))) return;
 
         SyncAnimatorStopState();
         //DetectPlayer();

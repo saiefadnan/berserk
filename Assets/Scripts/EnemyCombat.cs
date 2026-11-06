@@ -27,15 +27,18 @@ public class EnemyCombat : MonoBehaviour {
 
     public bool IsDead => isDead;
     public bool IsFakingDeath => isFakingDeath;
-    public bool CanAttack => !alreadyAttacked && !isDead && !isFakingDeath && !isBlocking;
+    public bool CanAttack => !alreadyAttacked && !isDead && !isFakingDeath && !isBlocking && !isKnockedDown;
     public bool IsBlocking => isBlocking;
     public bool IsAttacking => alreadyAttacked;
+    public bool IsKnockedDown => isKnockedDown;
 
     private bool alreadyAttacked;
     private bool isDead;
     private bool isFakingDeath;
     private bool isBlocking;
+    private bool isKnockedDown = false;
     private Coroutine blockCoroutine;
+    private Coroutine knockdownRoutine;
 
     private Health healthComponent;
     private Animator animator;
@@ -177,8 +180,55 @@ public class EnemyCombat : MonoBehaviour {
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
         }
+        if(data.reactionType == HitReactionType.Knockdown){
+            TriggerKnockdown(data);
+        }else{
+            animator.SetTrigger("hit_react");
+            if (agent != null && agent.enabled){
+                float push = data.knockbackForce > 0f ? data.knockbackForce * 0.15f : 0.4f;
+                agent.Move(data.hitDirection * push);
+            }
+        }
+    }
 
-        animator.SetTrigger("hit_react");
+    private void TriggerKnockdown(DamageData data){
+        if(knockdownRoutine != null){
+            StopCoroutine(knockdownRoutine);
+        }
+        knockdownRoutine = StartCoroutine(KnockdownRoutine(data));
+    }
+
+    private IEnumerator KnockdownRoutine(DamageData data){
+        isKnockedDown = true;
+        if(agent!=null && agent.enabled){
+            agent.isStopped = true;
+            agent.ResetPath();
+        }
+
+        animator.SetTrigger("knock_down");
+
+        Vector3 pushDir = data.hitDirection;
+        pushDir.y = 0f;
+        float force = data.knockbackForce > 0f ? data.knockbackForce : 6f;
+
+        float elapsed = 0f;
+        float slideDuration = 0.35f;
+        while(elapsed < slideDuration){
+            float speed = Mathf.Lerp(force, 0f, elapsed/slideDuration);
+            if(agent!=null && agent.enabled){
+                agent.Move(pushDir * (speed * Time.deltaTime));
+            }
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+        yield return new WaitForSeconds(2.2f);
+        if (!isDead && !isFakingDeath){
+            if(agent!=null && agent.enabled){
+                agent.isStopped = true;
+                isKnockedDown = false;
+            }
+        }
+        knockdownRoutine = null;
     }
 
     private void HandleDeath(DamageData data)

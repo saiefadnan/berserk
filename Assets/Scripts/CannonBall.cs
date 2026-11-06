@@ -73,7 +73,9 @@ public class CannonBall : MonoBehaviour {
                         amount = blastDamage,
                         hitDirection = blastDir.normalized,
                         hitPoint = col.ClosestPoint(impactPoint),
-                        attacker = owner != null ? owner : gameObject
+                        attacker = owner != null ? owner : gameObject,
+                        reactionType = HitReactionType.Knockdown,
+                        knockbackForce = explosionForce
                     };
 
                     damageable.TakeDamage(data);
