@@ -49,8 +49,6 @@ public class EnemyController : MonoBehaviour
     public float combatZoneRadius = 4f;
     public float orbitRadius = 3.2f;
     public float strafeSpeed = 2.0f;
-    private int strafeDir = 1;
-    private float strafeTimer = 0f;
 
     // ─────────────────────────────────────────────
     //  BEHAVIOUR TUNING
@@ -143,6 +141,16 @@ public class EnemyController : MonoBehaviour
         if (executionTarget == null){
             executionTarget = gameObject.AddComponent<ExecutionTarget>();
         }
+
+        // Guard against stale Inspector radius where combatZone < orbitRadius
+        if (combatZoneRadius < orbitRadius + 0.8f)
+        {
+            combatZoneRadius = orbitRadius + 1.2f;
+        }
+    }
+
+    private void Start(){
+        if (CombatDirector.Instance != null)CombatDirector.Instance.RegisterCombatant(this);
     }
 
     // ─────────────────────────────────────────────
@@ -284,17 +292,13 @@ public class EnemyController : MonoBehaviour
         if(player == null) return;
         if(combat!=null && combat.IsAttacking) return;
 
-        strafeTimer -= Time.deltaTime;
-        if(strafeTimer <= 0f){
-            strafeDir = (Random.value < 0.5f) ? 1 : -1;
-            strafeTimer = Random.Range(2.5f, 4.5f);
-        }
+        float flankAngle = (CombatDirector.Instance != null) ? CombatDirector.Instance.GetAsignedFlankAngle(this) : 0f;
+        Vector3 gutsFacing = player.forward;
+        gutsFacing.y = 0f;
+        gutsFacing.Normalize();
 
-        Vector3 toPlayer = player.position - transform.position;
-        toPlayer.y = 0f;
-        Vector3 dirToPlayer = toPlayer.normalized;
-        Vector3 tangent = Vector3.Cross(Vector3.up, dirToPlayer) * strafeDir;
-        Vector3 desiredPos = player.position - (dirToPlayer * orbitRadius) + (tangent * 1.8f);
+        Vector3 flankDirection = Quaternion.Euler(0f, flankAngle, 0f) * gutsFacing;
+        Vector3 desiredPos = player.position + (flankDirection * orbitRadius);
 
         if(NavMesh.SamplePosition(desiredPos, out NavMeshHit hit, 2.5f, NavMesh.AllAreas)){
             agent.speed = strafeSpeed;
@@ -482,6 +486,10 @@ public class EnemyController : MonoBehaviour
                 playGroanOnce = false;
             }
         }
+    }
+
+    private void OnDisable(){
+        if (CombatDirector.Instance != null) CombatDirector.Instance.UnregisterCombatant(this);
     }
 
     private void SetAgentStopped(bool stopped){

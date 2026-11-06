@@ -86,7 +86,7 @@ public class Sword : MonoBehaviour
             HitReactionType reaction = HitReactionType.SwordLight;
             float knockback = 2.0f;
 
-            if (inAttack3 || isBeastActive)
+            if (inAttack3)
             {
                 reaction = HitReactionType.SwordKnockdown;
                 knockback = isBeastActive ? 9.0f : 6.5f;
