@@ -21,6 +21,7 @@ public class PlayerMovement : MonoBehaviour
     public float crouchHeight = 1f;
     public float crouchSpeed = 3f;
     public bool isRunning = false;
+    [SerializeField] private float sprintStaminaCost = 15f; // per second
 
     private float walkSpeed;
     private float runSpeed;
@@ -36,6 +37,7 @@ public class PlayerMovement : MonoBehaviour
     private Animator animator;
     private PlayerCombat combat;
     private BeastOfDarkness beast;
+    private Stamina stamina;
 
     private EquipWeapon equipWeaponComponent;
     private GameObject swordHolder;
@@ -57,6 +59,8 @@ public class PlayerMovement : MonoBehaviour
         animator = GetComponentInChildren<Animator>();
         combat = GetComponent<PlayerCombat>();
         beast = GetComponent<BeastOfDarkness>();
+        stamina = GetComponent<Stamina>();
+        if (stamina == null) stamina = gameObject.AddComponent<Stamina>();
     }
 
     void Start()
@@ -77,7 +81,17 @@ public class PlayerMovement : MonoBehaviour
 
 
         bool isWalking = Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.A);
-        isRunning = Input.GetKey(KeyCode.LeftShift) && isWalking;
+        bool wantsRun = Input.GetKey(KeyCode.LeftShift) && isWalking;
+
+        if (wantsRun && stamina != null && !stamina.IsExhausted)
+        {
+            isRunning = true;
+            stamina.Consume(sprintStaminaCost * Time.deltaTime);
+        }
+        else
+        {
+            isRunning = false;
+        }
 
         float targetSpeed = !canMove || !isWalking ? 0 : (isRunning ? 1.0f : 0.5f);
         float speedMultiplier = (beast != null && beast.IsActive) ? 1.25f : 1.0f;

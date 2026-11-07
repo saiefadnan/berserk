@@ -42,6 +42,9 @@ public class ShootMecha : MonoBehaviour
     public Vector3 nextPosition;
     private CharacterController playerController;
 
+    public float CooldownNormalized => (fireCooldown > 0f) ? Mathf.Clamp01(cooldownTimer / fireCooldown) : 0f;
+    public bool IsCannonReady => cooldownTimer <= 0f;
+
 
     private void Awake()
     {

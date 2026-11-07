@@ -6,6 +6,7 @@ public class PlayerCombat : MonoBehaviour{
     [SerializeField] private float dodgeSpeed = 12f;
     [SerializeField] private float dodgeDuration = 0.45f;
     [SerializeField] private float dodgeCooldown = 0.5f;
+    [SerializeField] private float dodgeStaminaCost = 20f;
 
     [Header("Combo Timing")]
     [SerializeField] private float attackBufferDuration = 0.3f;
@@ -27,6 +28,7 @@ public class PlayerCombat : MonoBehaviour{
     private Health healthComponent;
     private EquipWeapon equipWeaponComponent;
     private PlayerMovement playerMovement;
+    private Stamina stamina;
 
     private bool isEquipped = false;
     private bool isGuarding = false;
@@ -77,6 +79,7 @@ public class PlayerCombat : MonoBehaviour{
         equipWeaponComponent = GetComponentInChildren<EquipWeapon>();
         playerMovement = GetComponent<PlayerMovement>();
         executionHandler = GetComponent<ExecutionHandler>();
+        stamina = GetComponent<Stamina>();
     }
 
     private void OnEnable()
@@ -159,6 +162,7 @@ public class PlayerCombat : MonoBehaviour{
     {
         if (isGuarding)
         {
+            if (stamina != null) stamina.Consume(12f);
             animator.SetTrigger(GuardHitParam);
             Vector3 sparkPoint = (data.hitPoint != Vector3.zero) ? data.hitPoint : transform.position + transform.forward + Vector3.up * 1.2f;
             if (sparkPrefab != null)
@@ -200,6 +204,8 @@ public class PlayerCombat : MonoBehaviour{
 
         if (Input.GetKeyDown(dodgeKey) && !isDodging && dodgeCooldownTimer <= 0 && canInitiateDodge)
         {
+            if (stamina != null && !stamina.TryConsume(dodgeStaminaCost)) return;
+
             isDodging = true;
             if (healthComponent != null) healthComponent.isInvulnerable = true;
             dodgeTimer = dodgeDuration;
