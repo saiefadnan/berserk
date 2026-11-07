@@ -2402,11 +2402,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58d135a0178c22047a436453cbf8e316, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  normalFOV: 70
-  zoomFOV: 20
-  zoomSpeed: 5
-  normalPos: {x: 0, y: 1.4, z: -2.08}
-  zoomPos: {x: -0.726, y: 0.6, z: -2.08}
+  normalFOV: 54
+  zoomFOV: 36
+  zoomSpeed: 6
+  normalPos: {x: 0, y: 1.65, z: -4.1}
+  zoomPos: {x: -0.65, y: 1.55, z: -2.4}
   playerCamera: {fileID: 0}
   projectileSpeed: 40
   recoilKick: 1.2

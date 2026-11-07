@@ -14,6 +14,7 @@ public class Sword : MonoBehaviour
     [SerializeField] private AudioClip clashAudio;
     [SerializeField] private AudioClip beastHitAudio;
     [SerializeField] private TrailRenderer swordTrail;
+    [SerializeField] private float trailWidth = 1.6f;
 
     private bool cool = false;
     private Animator animator;
@@ -36,6 +37,7 @@ public class Sword : MonoBehaviour
         {
             defaultTrailStartColor = swordTrail.startColor;
             defaultTrailEndColor = swordTrail.endColor;
+            swordTrail.widthMultiplier = trailWidth;
         }
     }
 

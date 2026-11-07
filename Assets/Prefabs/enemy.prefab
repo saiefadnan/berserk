@@ -2767,6 +2767,8 @@ MonoBehaviour:
   blockDuration: 1
   clashAudio: {fileID: 8300000, guid: 520f25ba244a65b40bec79fa29a2afd8, type: 3}
   sparkPrefab: {fileID: 7651888310079167479, guid: dab0264fd12e6e448ba5963b74deccfc, type: 3}
+  heavyWindupAudio: {fileID: 8300000, guid: e89b27419f2a41d4a8bc334455667788, type: 3}
+  heavyWindupVfxPrefab: {fileID: 7651888310079167479, guid: a1b2c3d4e5f6789012345678abcdef01, type: 3}
 --- !u!114 &2215509045159349808
 MonoBehaviour:
   m_ObjectHideFlags: 0

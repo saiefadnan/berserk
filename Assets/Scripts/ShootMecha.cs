@@ -5,12 +5,12 @@ using UnityEngine.Animations.Rigging;
 public class ShootMecha : MonoBehaviour
 {
     [Header("Camera Zoom Settings")]
-    [SerializeField] private  float normalFOV;
-    [SerializeField] private  float zoomFOV;
-    [SerializeField] private  float zoomSpeed;
-    [SerializeField] private  Vector3 normalPos;
-    [SerializeField] private  Vector3 zoomPos;
-    [SerializeField] private  Camera playerCamera;
+    [SerializeField] private float normalFOV = 54f;
+    [SerializeField] private float zoomFOV = 36f;
+    [SerializeField] private float zoomSpeed = 6f;
+    [SerializeField] private Vector3 normalPos = new Vector3(0f, 1.65f, -4.10f);
+    [SerializeField] private Vector3 zoomPos = new Vector3(-0.65f, 1.55f, -2.40f);
+    [SerializeField] private Camera playerCamera;
 
 
     [Header("Cannon Blast & Recoil")]

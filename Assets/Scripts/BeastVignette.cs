@@ -9,8 +9,8 @@ public class BeastVignette : MonoBehaviour
     [SerializeField] private Camera playerCamera;
 
     [Header("Tunnel Vision Settings")]
-    [SerializeField] private float normalFOV = 60f;
-    [SerializeField] private float beastFOV = 52f;
+    [SerializeField] private float normalFOV = 54f;
+    [SerializeField] private float beastFOV = 46f;
     [SerializeField] private float fovTransitionSpeed = 4f;
 
     [Header("Vignette Pulse")]

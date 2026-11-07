@@ -28,7 +28,7 @@ public class PlayerMovement : MonoBehaviour
     private float _currentVelocity;
     private float currentSpeed;
     private Vector3 moveDirection;
-    private float rotationX = 0f, rotationY;
+    private float rotationX = 10f, rotationY;
     private bool canMove = true;
     private bool stepRunning = false;
 

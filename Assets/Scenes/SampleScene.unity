@@ -33003,8 +33003,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BeastVignette
   targetBeast: {fileID: 35385146}
   playerCamera: {fileID: 638760646}
-  normalFOV: 60
-  beastFOV: 52
+  normalFOV: 54
+  beastFOV: 46
   fovTransitionSpeed: 4
   bloodColor: {r: 0.75, g: 0.05, b: 0.05, a: 1}
   minPulseAlpha: 0.35
@@ -33220,7 +33220,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 25
+  field of view: 54
   orthographic: 0
   orthographic size: 5
   m_Depth: -1
@@ -33314,13 +33314,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 638760645}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.01409579, y: 0.953447, z: -0.045124702, w: -0.2978322}
-  m_LocalPosition: {x: 1.6989746, y: 0.18000007, z: 2.7120056}
+  m_LocalRotation: {x: 0.08715574, y: 0, z: 0, w: 0.9961947}
+  m_LocalPosition: {x: 0, y: 1.65, z: -4.1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 35385141}
-  m_LocalEulerAnglesHint: {x: 15.02, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 10, y: 0, z: 0}
 --- !u!1 &647640980
 GameObject:
   m_ObjectHideFlags: 0
@@ -35022,7 +35022,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5684938673424796944, guid: a1ab0ad867ae79944a5a199de18856c1, type: 3}
       propertyPath: combatZoneRadius
-      value: 2.8
+      value: 2.2
       objectReference: {fileID: 0}
     - target: {fileID: 5805023636019808574, guid: a1ab0ad867ae79944a5a199de18856c1, type: 3}
       propertyPath: m_LocalPosition.x
@@ -42695,7 +42695,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5684938673424796944, guid: a1ab0ad867ae79944a5a199de18856c1, type: 3}
       propertyPath: combatZoneRadius
-      value: 2.8
+      value: 2.2
       objectReference: {fileID: 0}
     - target: {fileID: 5805023636019808574, guid: a1ab0ad867ae79944a5a199de18856c1, type: 3}
       propertyPath: m_LocalPosition.x
@@ -54622,11 +54622,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1273276538482450129, guid: 8ce21e5215bc6d74eabac4873f810a05, type: 3}
       propertyPath: m_Data.m_Offset.x
-      value: 0
+      value: 100
       objectReference: {fileID: 0}
     - target: {fileID: 1273276538482450129, guid: 8ce21e5215bc6d74eabac4873f810a05, type: 3}
       propertyPath: m_Data.m_Offset.y
-      value: 0
+      value: 25
+      objectReference: {fileID: 0}
+    - target: {fileID: 1273276538482450129, guid: 8ce21e5215bc6d74eabac4873f810a05, type: 3}
+      propertyPath: m_Data.m_Offset.z
+      value: 90
       objectReference: {fileID: 0}
     - target: {fileID: 1329648011859222943, guid: 8ce21e5215bc6d74eabac4873f810a05, type: 3}
       propertyPath: m_Mesh
@@ -55369,6 +55373,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 8300000, guid: ee72dad4b53265944b55d09a0659d09d, type: 3}
     - target: {fileID: 5332888208051328369, guid: 8ce21e5215bc6d74eabac4873f810a05, type: 3}
+      propertyPath: zoomPos.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5332888208051328369, guid: 8ce21e5215bc6d74eabac4873f810a05, type: 3}
       propertyPath: arrowSpeed
       value: 50
       objectReference: {fileID: 0}
@@ -55378,7 +55386,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5332888208051328369, guid: 8ce21e5215bc6d74eabac4873f810a05, type: 3}
       propertyPath: normalPos.y
-      value: 0.6
+      value: 1.65
       objectReference: {fileID: 0}
     - target: {fileID: 5332888208051328369, guid: 8ce21e5215bc6d74eabac4873f810a05, type: 3}
       propertyPath: playerCamera
@@ -60469,7 +60477,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5684938673424796944, guid: a1ab0ad867ae79944a5a199de18856c1, type: 3}
       propertyPath: combatZoneRadius
-      value: 2.8
+      value: 2.2
       objectReference: {fileID: 0}
     - target: {fileID: 5805023636019808574, guid: a1ab0ad867ae79944a5a199de18856c1, type: 3}
       propertyPath: m_LocalPosition.x

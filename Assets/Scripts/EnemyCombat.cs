@@ -24,6 +24,11 @@ public class EnemyCombat : MonoBehaviour {
     [SerializeField] private AudioClip clashAudio;
     [SerializeField] private GameObject sparkPrefab;
 
+    [Header("Heavy Attack Tell (Telegraph)")]
+    [SerializeField] private AudioClip heavyWindupAudio;
+    [SerializeField] private GameObject heavyWindupVfxPrefab;
+    [SerializeField] private Transform weaponTransform;
+
 
     public bool IsDead => isDead;
     public bool IsFakingDeath => isFakingDeath;
@@ -99,6 +104,7 @@ public class EnemyCombat : MonoBehaviour {
             delay = 0.55f;
             reach = 2.6f;
             dmg *= 1.4f; // Crushing heavy blow
+            PlayHeavyAttackTell();
         }
         else if (attackIndex == 2) // Lunging Gap-Closer
         {
@@ -168,6 +174,35 @@ public class EnemyCombat : MonoBehaviour {
             healthComponent.OnDamaged -= HandleDamaged;
             healthComponent.OnDeath -= HandleDeath;
         }
+    }
+
+    private void PlayHeavyAttackTell(){
+        if (audioSource != null){
+            if (heavyWindupAudio != null)
+                audioSource.PlayOneShot(heavyWindupAudio);
+            else if (screamClips != null && screamClips.Length > 0)
+                audioSource.PlayOneShot(screamClips[Random.Range(0, screamClips.Length)]);
+        }
+
+        Vector3 tellPos;
+        if (weaponTransform != null){
+            tellPos = weaponTransform.position;
+        }
+        else if (animator != null && animator.isHuman){
+            Transform hand = animator.GetBoneTransform(HumanBodyBones.RightHand);
+            tellPos = (hand != null) ? hand.position + Vector3.up * 0.35f : transform.position + Vector3.up * 1.8f + transform.forward * 0.4f;
+        }
+        else{
+            tellPos = transform.position + Vector3.up * 1.8f + transform.forward * 0.4f;
+        }
+
+        GameObject vfx = heavyWindupVfxPrefab != null ? heavyWindupVfxPrefab : sparkPrefab;
+        if (vfx != null){
+            GameObject fxInstance = Instantiate(vfx, tellPos, Quaternion.identity);
+            Destroy(fxInstance, 0.85f);
+        }
+
+        Debug.Log("<color=red><b>[ENEMY TELEGRAPH] Heavy Overhead Cleave wind-up!</b></color>");
     }
 
     private void HandleDamaged(DamageData data)
