@@ -83,11 +83,11 @@ flowchart TD
   - **Attack 1 (Heavy Overhead Cleave):** Downward power chop (`OneHand_Up_Attack_2_InPlace.anim`), 1.4x damage, 0.55s windup.
   - **Attack 2 (Lunging Gap-Closer):** Forward lunge thrust (`OneHand_Up_Attack_3_InPlace.anim`) from 2.5m - 3.2m distance.
   - Distance-based tactical attack selection & independent damage timing routines.
-- [ ] **3.5 Tactical Combat Brain (Spacing, Circling & Counters)**
+- [x] **3.5 Tactical Combat Brain (Spacing, Circling & Counters)** (:white_check_mark: COMPLETED)
   - Orbital combat strafing / circling at 2.5m - 3.5m spacing instead of mindless charging.
   - Distinct visual wind-up tells and audible grunts before heavy strikes.
   - Punish window AI: immediate counter-attack if Guts whiffs or strikes an active enemy guard.
-  - Combat slot token manager for coordinated multi-enemy engagements.
+  - Round-robin token manager with anti-starvation queue and Scene view debug Gizmos.
 
 ---
 

@@ -29,6 +29,11 @@ public class EnemyCombat : MonoBehaviour {
     [SerializeField] private GameObject heavyWindupVfxPrefab;
     [SerializeField] private Transform weaponTransform;
 
+    [Header("Guard Counter Settings")]
+    [Tooltip("Chance (0..1) the enemy immediately retaliates after deflecting an attack with shield")]
+    [SerializeField] private float guardCounterChance = 0.70f;
+    [SerializeField] private float counterDelay = 0.18f;
+
 
     public bool IsDead => isDead;
     public bool IsFakingDeath => isFakingDeath;
@@ -42,8 +47,10 @@ public class EnemyCombat : MonoBehaviour {
     private bool isFakingDeath;
     private bool isBlocking;
     private bool isKnockedDown = false;
+
     private Coroutine blockCoroutine;
     private Coroutine knockdownRoutine;
+    private Coroutine guardCounterRoutine;
 
     private Health healthComponent;
     private Animator animator;
@@ -219,7 +226,15 @@ public class EnemyCombat : MonoBehaviour {
                 TriggerKnockdown(data);
                 return;
             }
-            Debug.Log("<color=yellow><b>[ENEMY BLOCK] Deflected Dragonslayer blow with Shield/Sword Block!</b></color>");
+
+            // --- GUARD COUNTER TRIGGER (GUARD IMPACT) ---
+            if (guardCounterRoutine == null && Random.value < guardCounterChance) {
+                isBlocking = false;
+                if (blockCoroutine != null) StopCoroutine(blockCoroutine);
+                if (healthComponent != null) healthComponent.damageReductionPercent = 0f;
+                Transform playerTransform = (data.attacker != null) ?data.attacker.transform : null;
+                guardCounterRoutine = StartCoroutine(GuardCounterRoutine(playerTransform));
+            }
             return;
         }
 
@@ -248,6 +263,27 @@ public class EnemyCombat : MonoBehaviour {
         if (CombatDirector.Instance != null){
             CombatDirector.Instance.ReleaseAttackToken(this);
         }
+    }
+
+    private IEnumerator GuardCounterRoutine(Transform target){
+        yield return new WaitForSeconds(counterDelay);
+        if (isDead || isKnockedDown || isFakingDeath){
+            guardCounterRoutine = null;
+            yield break;
+        }
+        if (target != null){
+            Vector3 dir = (target.position - transform.position).normalized;
+            dir.y = 0;
+            if (dir.sqrMagnitude > 0.001f)transform.rotation = Quaternion.LookRotation(dir);
+            animator.ResetTrigger("run");
+            animator.SetInteger("attackIndex", 0);
+            animator.SetTrigger("attack");
+
+            StartCoroutine(AttackDamageRoutine(target, 0));
+            alreadyAttacked = true;
+            Invoke(nameof(ResetAttack), timeBetweenAttacks);
+        }
+        guardCounterRoutine = null;
     }
 
     private IEnumerator KnockdownRoutine(DamageData data){

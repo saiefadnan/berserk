@@ -17,6 +17,7 @@ public class Sword : MonoBehaviour
     [SerializeField] private float trailWidth = 1.6f;
 
     private bool cool = false;
+    private bool hitAnyTargetThisSwing = false;
     private Animator animator;
     private Coroutine hitStopCoroutine;
     private Color defaultTrailStartColor = Color.white;
@@ -48,7 +49,7 @@ public class Sword : MonoBehaviour
         {
             IDamageable damageable = other.GetComponent<IDamageable>() ?? other.GetComponentInParent<IDamageable>();
             if (damageable == null || damageable.victim == transform.root.gameObject) return;
-
+            hitAnyTargetThisSwing = true;
             // No ContactPoint available with triggers, use transform instead
             Vector3 hitPoint = other.ClosestPoint(transform.position);
             Vector3 hitNormal = (hitPoint - transform.position).normalized;
@@ -240,6 +241,7 @@ public class Sword : MonoBehaviour
     public void EnableDamage()
     {
         cool = true;
+        hitAnyTargetThisSwing = false;
         AnimateSlash();
         if (swordTrail != null) {
             BeastOfDarkness beast = transform.root.GetComponent<BeastOfDarkness>();
@@ -264,6 +266,9 @@ public class Sword : MonoBehaviour
     {
         cool = false;
         if (swordTrail != null) swordTrail.emitting = false;
+        if (!hitAnyTargetThisSwing && CombatDirector.Instance != null){
+            CombatDirector.Instance.NotifyPlayerWhiff(transform.root.position);
+        }
     }
 
 
