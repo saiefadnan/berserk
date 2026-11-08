@@ -115,10 +115,10 @@ flowchart TD
 ### Phase 5: Core Game Loop, HUD & Sound
 > **Goal:** Wrap systems into a cohesive, playable game experience.
 
-- [ ] **5.1 HUD & Interface**
-  - Health bar, Stamina bar, and Berserk / Rage meter.
-  - Cannon ammunition / cooldown display.
-  - Lock-on crosshair indicator.
+- [x] **5.1 HUD & Interface**
+  - Health bar, Stamina bar, and Berserk / Rage meter with ghost-fill lag and status prompts.
+  - Cannon ammunition / cooldown display with radial reload wipe widget.
+  - Sekiro-style lock-on targeting system with camera tracking, combat strafing, and Deathblow execution state.
 - [ ] **5.2 Progression & Damage Loop**
   - Player health, damage calculation, defense stats, and death flow.
   - Checkpoint and respawn management.

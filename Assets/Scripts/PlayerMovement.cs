@@ -43,14 +43,18 @@ public class PlayerMovement : MonoBehaviour
     private GameObject swordHolder;
     private GameObject weapon;
 
-     [Header("Audio")]
+    [Header("Audio")]
     [SerializeField] private AudioSource footAudioSrc;
     [SerializeField] private AudioClip footStep;
 
     private static readonly int EqMovParam = Animator.StringToHash("eq_mov");
     private static readonly int SpeedParam = Animator.StringToHash("speed");
-
     public bool CanMove => canMove && combat.CanMove;
+
+    [Header("Lock-On Movement")]
+    [SerializeField] private float lockRotationSpeed = 10f;
+    private TargetLockSystem targetLock;
+
 
     private void Awake()
     {
@@ -60,6 +64,8 @@ public class PlayerMovement : MonoBehaviour
         combat = GetComponent<PlayerCombat>();
         beast = GetComponent<BeastOfDarkness>();
         stamina = GetComponent<Stamina>();
+        targetLock = GetComponent<TargetLockSystem>() ?? GetComponentInParent<TargetLockSystem>();
+        if (targetLock == null) targetLock = FindFirstObjectByType<TargetLockSystem>();
         if (stamina == null) stamina = gameObject.AddComponent<Stamina>();
     }
 
@@ -121,6 +127,19 @@ public class PlayerMovement : MonoBehaviour
             FaceAngle(transform.eulerAngles.y);
             StopFootStep();
         }
+        else if (targetLock != null && targetLock.IsLockedOn && targetLock.CurrentTarget != null){
+            Vector3 dirToTarget = targetLock.CurrentTarget.position - transform.position;
+            dirToTarget.y = 0;
+            if (dirToTarget.sqrMagnitude > 0.001f){
+                FaceAngle(Mathf.Atan2(dirToTarget.x, dirToTarget.z) * Mathf.Rad2Deg);
+            }
+            if (moveDirection != Vector3.zero && !combat.IsDodging){
+                HandleFootSteps();
+            }
+            else{
+                StopFootStep();
+            }
+        }
         else if (!combat.IsDodging && moveDirection != Vector3.zero)
         {
             var targetAngle = Mathf.Atan2(moveDirection.x, moveDirection.z) * Mathf.Rad2Deg;
@@ -175,8 +194,20 @@ public class PlayerMovement : MonoBehaviour
     }
 
     private void HandleCameraLook(AnimatorStateInfo upperState, bool isWalking){
-        if (canMove)
-        {
+        if (!canMove) return;
+        if (targetLock != null && targetLock.IsLockedOn && targetLock.CurrentTarget != null){
+            Vector3 dirToTarget = targetLock.CurrentTarget.position - transform.position;
+            dirToTarget.y = 0;
+            if (dirToTarget.sqrMagnitude > 0.001f){
+                Quaternion targetRot = Quaternion.LookRotation(dirToTarget);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, lockRotationSpeed * Time.deltaTime);
+            }
+            Vector3 camToTarget = (targetLock.CurrentTarget.position + Vector3.up * 1.2f) - playerCamera.transform.position;
+            float targetPitch = -Mathf.Atan2(camToTarget.y, new Vector2(camToTarget.x, camToTarget.z).magnitude) * Mathf.Rad2Deg;
+            rotationX = Mathf.Lerp(rotationX, Mathf.Clamp(targetPitch, -lookXLimit, !upperState.IsName("shoot") ? lookXLimit : 25f), lockRotationSpeed * Time.deltaTime);
+            playerCamera.transform.localRotation = Quaternion.Euler(rotationX, 0, 0);
+        }
+        else{
             rotationX -= Input.GetAxis("Mouse Y") * lookSpeed;
             rotationX = Mathf.Clamp(rotationX, -lookXLimit, !upperState.IsName("shoot") ? lookXLimit : 25f);
             playerCamera.transform.localRotation = Quaternion.Euler(rotationX, 0, 0);
@@ -184,6 +215,7 @@ public class PlayerMovement : MonoBehaviour
             if (!upperState.IsName("shoot") && !isWalking && !combat.IsGuarding) figure.transform.localRotation *= Quaternion.Euler(0, -rotationY, 0);
             transform.localRotation *= Quaternion.Euler(0, rotationY, 0);
         }
+
     }
 
     private void FaceAngle(float targetAngle){
