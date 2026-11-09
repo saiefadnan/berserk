@@ -119,9 +119,11 @@ flowchart TD
   - Health bar, Stamina bar, and Berserk / Rage meter with ghost-fill lag and status prompts.
   - Cannon ammunition / cooldown display with radial reload wipe widget.
   - Sekiro-style lock-on targeting system with camera tracking, combat strafing, and Deathblow execution state.
-- [ ] **5.2 Progression & Damage Loop**
-  - Player health, damage calculation, defense stats, and death flow.
-  - Checkpoint and respawn management.
+- [ ] **5.2 Progression & Precision Damage Loop**
+  - **Physical Enemy Weapon Hitboxes**: Eliminate phantom sphere damage; player only takes damage when the enemy's physical blade collider physically cuts through Guts' body collider.
+  - **Active Swing Frame Windows**: Accurate hitbox enable/disable windows with hit-once-per-swing tracking.
+  - **Player Death Flow**: Slow-motion cinematic impact on lethal blow, death ragdoll/animation, and dark fantasy death screen.
+  - **Checkpoint & Respawn Loop**: Respawn at safe checkpoint, restore player stats, and reset active combat encounter state.
 - [ ] **5.3 Audio Architecture**
   - Adaptive soundtrack switching between exploration ambient and intense combat themes.
   - Layered sword swings (light swoosh vs deep sonic whoosh for heavy swings).

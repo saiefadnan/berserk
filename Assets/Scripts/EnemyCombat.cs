@@ -56,13 +56,14 @@ public class EnemyCombat : MonoBehaviour {
     private Animator animator;
     private RagdollHandler ragdollHandler;
     private NavMeshAgent agent;
-
+    private EnemyWeapon sword;
     private void Awake()
     {
         agent = GetComponent<UnityEngine.AI.NavMeshAgent>();
         animator = GetComponentInChildren<Animator>();
         healthComponent = GetComponent<Health>();
         ragdollHandler = GetComponent<RagdollHandler>();
+        sword = GetComponentInChildren<EnemyWeapon>();
         if (audioSource == null) audioSource = GetComponent<AudioSource>();
     }
 
@@ -86,8 +87,6 @@ public class EnemyCombat : MonoBehaviour {
         animator.SetInteger("attackIndex", attackIndex);
         animator.SetTrigger("attack");
 
-        StartCoroutine(AttackDamageRoutine(playerTarget, attackIndex));
-
         alreadyAttacked = true;
         float cooldown = (attackIndex == 1) ? 1.8f : timeBetweenAttacks;
         Invoke(nameof(ResetAttack), cooldown);
@@ -99,50 +98,6 @@ public class EnemyCombat : MonoBehaviour {
         if (CombatDirector.Instance == null) return true;
         return CombatDirector.Instance.RequestAttackToken(this);
     }
-    private IEnumerator AttackDamageRoutine(Transform playerTarget, int attackIndex)
-    {
-        // Custom wind-up delay and reach per attack
-        float delay = 0.30f;
-        float reach = 2.5f;
-        float dmg = Random.Range(minDamage, maxDamage + 1);
-
-        if (attackIndex == 1) // Heavy Overhead Cleave
-        {
-            delay = 0.55f;
-            reach = 2.6f;
-            dmg *= 1.4f; // Crushing heavy blow
-            PlayHeavyAttackTell();
-        }
-        else if (attackIndex == 2) // Lunging Gap-Closer
-        {
-            delay = 0.40f;
-            reach = 3.2f; // Extended lunge reach
-            dmg *= 1.15f;
-        }
-
-        yield return new WaitForSeconds(delay);
-
-        if (isDead || isFakingDeath || playerTarget == null) yield break;
-
-        float currentDist = Vector3.Distance(transform.position, playerTarget.position);
-        if (currentDist <= reach)
-        {
-            IDamageable target = playerTarget.GetComponentInParent<IDamageable>() ?? playerTarget.GetComponent<IDamageable>();
-            if (target != null)
-            {
-                DamageData data = new DamageData
-                {
-                    amount = dmg,
-                    hitDirection = transform.forward,
-                    hitPoint = playerTarget.position + Vector3.up * 1.2f,
-                    attacker = gameObject
-                };
-                target.TakeDamage(data);
-                Debug.Log($"<color=orange>[ENEMY ATTACK {attackIndex}] Landed {dmg:F1} damage on Player!</color>");
-            }
-        }
-    }
-
     public void TryBlock(){
         if(isDead || isFakingDeath || isBlocking) return;
          if (animator != null && animator.GetCurrentAnimatorStateInfo(0).IsName("hit_react")) return;
@@ -279,7 +234,6 @@ public class EnemyCombat : MonoBehaviour {
             animator.SetInteger("attackIndex", 0);
             animator.SetTrigger("attack");
 
-            StartCoroutine(AttackDamageRoutine(target, 0));
             alreadyAttacked = true;
             Invoke(nameof(ResetAttack), timeBetweenAttacks);
         }
@@ -423,6 +377,12 @@ public class EnemyCombat : MonoBehaviour {
         {
             Die();
         }
+    }
+
+    void EnablePlayerDamage()
+    {
+        Debug.Log("player damage enabled...");
+        if (sword) sword.EnableDamage();
     }
 
 }
