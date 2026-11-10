@@ -45,6 +45,7 @@ public class RagdollHandler : MonoBehaviour
             foreach (Collider col in boneColliders)
             {
                 if (col == null || col == rootCollider) continue;
+                if (col.isTrigger || col.GetComponent<EnemyWeapon>() != null) continue;
                 col.enabled = active;
             }
         }

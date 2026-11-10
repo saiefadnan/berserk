@@ -381,7 +381,6 @@ public class EnemyCombat : MonoBehaviour {
 
     void EnablePlayerDamage()
     {
-        Debug.Log("player damage enabled...");
         if (sword) sword.EnableDamage();
     }
 

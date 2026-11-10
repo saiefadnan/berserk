@@ -2,8 +2,10 @@ using UnityEngine;
 
 public class EnemyWeapon: MonoBehaviour{
     [SerializeField] private float damage = 10f;
+    [SerializeField] private TrailRenderer weaponTrail;
     private bool cool = false;
     private EnemyController combatOwner;
+
 
     private void Awake()
     {
@@ -12,6 +14,7 @@ public class EnemyWeapon: MonoBehaviour{
 
     private void OnTriggerEnter(Collider other)
     {
+        Debug.Log("player damage triggered..." + other.name);
         if(!cool || other.transform.root == transform.root) return;
         if(combatOwner == null || combatOwner.IsDead) return;
         IDamageable damageable = other.GetComponent<IDamageable>() ?? other.GetComponentInParent<IDamageable>();
@@ -32,10 +35,12 @@ public class EnemyWeapon: MonoBehaviour{
 
     public void EnableDamage(){
         cool = true;
+        if(weaponTrail!=null)weaponTrail.emitting = true;
         Invoke(nameof(DisableDamage), 0.5f);
     }
 
     public void DisableDamage(){
+        if(weaponTrail!=null)weaponTrail.emitting = false;
         cool = false;
     }
 }
