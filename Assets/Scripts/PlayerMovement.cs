@@ -49,7 +49,7 @@ public class PlayerMovement : MonoBehaviour
 
     private static readonly int EqMovParam = Animator.StringToHash("eq_mov");
     private static readonly int SpeedParam = Animator.StringToHash("speed");
-    public bool CanMove => canMove && combat.CanMove;
+    public bool CanMove => canMove && (combat == null || combat.CanMove) && (healthComponent == null || !healthComponent.IsDead);
 
     [Header("Lock-On Movement")]
     [SerializeField] private float lockRotationSpeed = 10f;
@@ -79,6 +79,12 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
+        if (healthComponent != null && healthComponent.IsDead)
+        {
+            StopFootStep();
+            return;
+        }
+
         AnimatorStateInfo baseState = animator.GetCurrentAnimatorStateInfo(0);
         AnimatorStateInfo upperState = animator.GetCurrentAnimatorStateInfo(1);
 

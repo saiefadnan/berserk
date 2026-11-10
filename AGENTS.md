@@ -8,6 +8,12 @@
   3. Propose changes clearly and allow the user to review, learn, and guide the implementation.
   4. Only proceed to the next step once the user confirms they are ready.
 
+### Mandatory 4-Step Collaborative Protocol:
+1. **Discuss Goal & Mechanic First**: Agree on one specific mechanic/feature before writing anything.
+2. **Propose Smallest Snippets in Chat First**: Show the code snippet directly in chat, explain what each function does, and ensure alignment.
+3. **No Chore Dumping**: Never dump finished 100+ line scripts followed by long manual editor checklists. Build UI and setups collaboratively.
+4. **Immediate Play-Testing**: Hook up the immediate piece, test in Play mode together, diagnose any issues collaboratively, and apply surgical fixes.
+
 ## 2. Project Boundaries & Constraints
 - **Frozen Assets**: Never alter the Cape mesh, cloth coefficients, or cloth physics settings unless explicitly requested by the user.
 - **Respect Existing Systems**: Build thoughtfully on top of existing components (`PlayerCombat.cs`, `EnemyCombat.cs`, `EnemyController.cs`) instead of discarding or completely rewriting them.

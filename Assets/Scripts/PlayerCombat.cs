@@ -56,7 +56,7 @@ public class PlayerCombat : MonoBehaviour{
     public bool IsDodging => isDodging;
     public bool IsShooting => isShooting;
     public bool IsAttacking { get; private set; }
-    public bool CanMove => !IsAttacking && !isGuarding && !isDodging && (executionHandler == null || !executionHandler.IsExecuting);
+    public bool CanMove => !IsAttacking && !isGuarding && !isDodging && (executionHandler == null || !executionHandler.IsExecuting) && (healthComponent == null || !healthComponent.IsDead);
     public bool CanCancelIntoDodge
     {
         get
@@ -100,6 +100,7 @@ public class PlayerCombat : MonoBehaviour{
 
     private void Update()
     {
+        if (healthComponent != null && healthComponent.IsDead) return;
         if (executionHandler != null && executionHandler.IsExecuting) return;
 
         AnimatorStateInfo baseState = animator.GetCurrentAnimatorStateInfo(0);
