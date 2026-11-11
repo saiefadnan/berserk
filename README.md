@@ -65,31 +65,42 @@ Engineered with a focus on tactile game feel, precision animation-driven PhysX h
 
 ## System Architecture
 
+The codebase follows the production-grade Unity structure separating bespoke gameplay code and assets from external vendor packages:
+
 ```
-Assets/Scripts/
-├── Player/
-│   ├── PlayerMovement.cs        # Locomotion, camera tracking & strafing
-│   ├── PlayerCombat.cs          # Combo state machine, guard, lunge impulse & dodge
-│   ├── PlayerDeathHandler.cs    # Lethal hitstop, input lockout & respawn
-│   ├── Stamina.cs               # Resource consumption & regen delay
-│   └── BeastOfDarkness.cs       # Rage mode, stat multipliers & eye trail VFX
-├── Combat/
-│   ├── EnemyCombat.cs           # Enemy attack chaining & animation event triggers
-│   ├── EnemyWeapon.cs           # Physical blade trigger hitbox & IDamageable dispatch
-│   ├── Sword.cs                 # Player weapon collision & dismemberment trigger
-│   └── ShootMecha.cs            # Cannon projectile launch & explosive AoE
-├── Enemy/
-│   ├── EnemyController.cs       # Spacing, circling AI & combat tokens
-│   ├── RagdollHandler.cs        # Skeleton physics & trigger preservation
-│   └── Dismemberment.cs         # Dynamic decapitation & limb severing
-├── Core/
-│   ├── Health.cs                # IDamageable interface, damage reduction & death event
-│   ├── CameraShake.cs           # Procedural trauma-based impulse shake
-│   └── TargetLockSystem.cs      # Sekiro lock-on scoring, raycasting & reticle
-└── UI/
-    ├── DeathScreenUI.cs         # "YOU DIED" canvas fade, scale loom & audio
-    ├── HealthBar.cs             # Smooth ghost-fill health bar
-    └── CanonWidget.cs           # Cannon reload radial wipe cooldown
+Assets/
+├── _Project/
+│   ├── Animations/              # Combat, locomotion, and death clips
+│   ├── Audio/                   # Custom synthesized SFX (impact thuds, death chimes)
+│   ├── Characters/              # Guts & Paladin models, rigs, and cloth physics
+│   ├── Materials/               # Shaders, blood decals & environment materials
+│   ├── Prefabs/                 # VFX, arrows, cannonball projectiles & UI widgets
+│   ├── Scenes/                  # Production scene (SampleScene.unity)
+│   ├── Scripts/
+│   │   ├── PlayerMovement.cs    # Kinematic movement, camera tracking & dodge
+│   │   ├── PlayerCombat.cs      # Combo state machine, guard & parry windows
+│   │   ├── PlayerDeathHandler.cs# Lethal hitstop, death flow & respawn loop
+│   │   ├── Stamina.cs           # Dynamic stamina consumption & regeneration
+│   │   ├── BeastOfDarkness.cs   # Berserker rage mode, lifesteal & eye trails
+│   │   ├── ShootMecha.cs        # Arm cannon projectile aiming & firing
+│   │   ├── CannonBall.cs        # Explosive AoE projectile with PhysX impulse
+│   │   ├── Sword.cs             # Dragonslayer blade collision & dismemberment
+│   │   ├── EnemyController.cs   # State machine, combat pacing & token slots
+│   │   ├── EnemyCombat.cs       # Attack sequences & animation-driven triggers
+│   │   ├── EnemyWeapon.cs       # Bone-synchronized physical blade hitbox
+│   │   ├── EnemyPerception.cs   # Line-of-sight & vision cone detection
+│   │   ├── CombatDirector.cs    # Coordinated multi-enemy attack pacing
+│   │   ├── RagdollHandler.cs    # Hitbox-preserving PhysX ragdoll switching
+│   │   ├── Dismemberment.cs     # Mesh slicing & limb separation
+│   │   ├── Health.cs            # IDamageable interface & lethal damage dispatch
+│   │   ├── CameraShake.cs       # Procedural trauma-based impulse shake
+│   │   ├── TargetLockSystem.cs  # Sekiro lock-on heuristic, raycasting & strafe
+│   │   ├── ExecutionHandler.cs  # Stagger threshold & deathblow execution
+│   │   ├── DeathScreenUI.cs     # "YOU DIED" canvas fade, scale loom & audio
+│   │   ├── PlayerHUD.cs         # Unified vitals presentation layer
+│   │   └── CanonWidget.cs       # Cannon reload radial wipe cooldown
+│   └── UI/                      # Dark fantasy reticles, death text & textures
+└── ThirdParty/                  # Isolated vendor & Asset Store packages
 ```
 
 ---
@@ -107,7 +118,7 @@ Assets/Scripts/
    ```
 2. Open the project inside **Unity Hub**.
 3. Load the main scene:
-   `Assets/Scenes/SampleScene.unity`
+   `Assets/_Project/Scenes/SampleScene.unity`
 4. Press **Play** in the Unity Editor to enter combat!
 
 ---
