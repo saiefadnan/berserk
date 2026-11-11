@@ -6,7 +6,7 @@ public class LivePerformanceHUD : MonoBehaviour
     [Header("Toggle Keybindings")]
     [SerializeField] private KeyCode toggleKey = KeyCode.F3;
     [SerializeField] private KeyCode compactKey = KeyCode.F4;
-    [SerializeField] private bool showOnStart = true;
+    [SerializeField] private bool showOnStart = false;
 
     [Header("Display Tuning")]
     [SerializeField] private int targetFrameRate = 60;
