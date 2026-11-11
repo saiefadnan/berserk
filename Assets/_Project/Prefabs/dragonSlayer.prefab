@@ -140,6 +140,11 @@ MonoBehaviour:
   beastHitAudio: {fileID: 8300000, guid: 9a19e34b15512704d98fdab1927e561e, type: 3}
   swordTrail: {fileID: 2941361644582129950}
   trailWidth: 1.2
+  impactAudioSource: {fileID: 0}
+  fleshCleaveClips:
+  - {fileID: 8300000, guid: cf4929a3b697734419600d2f412ff6e0, type: 3}
+  - {fileID: 8300000, guid: 845c95248e6b0704f961f88ad9c3a317, type: 3}
+  heavyCleaveClip: {fileID: 8300000, guid: e892d6fcf0651124db4f5a092f717a1d, type: 3}
 --- !u!1 &834875114661749936
 GameObject:
   m_ObjectHideFlags: 0

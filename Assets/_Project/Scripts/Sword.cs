@@ -16,6 +16,12 @@ public class Sword : MonoBehaviour
     [SerializeField] private TrailRenderer swordTrail;
     [SerializeField] private float trailWidth = 1.6f;
 
+    [Header("Impact Audio Polish")]
+    [SerializeField] private AudioSource impactAudioSource;
+    [SerializeField] private AudioClip[] fleshCleaveClips;
+    [SerializeField] private AudioClip heavyCleaveClip;
+
+
     private bool cool = false;
     private bool hitAnyTargetThisSwing = false;
     private Animator animator;
@@ -29,6 +35,23 @@ public class Sword : MonoBehaviour
     {
         if (audioSource == null)
             audioSource = GetComponent<AudioSource>() ?? GetComponentInParent<AudioSource>();
+
+        if (impactAudioSource == null)
+        {
+            AudioSource[] sources = GetComponents<AudioSource>();
+            if (sources.Length > 1)
+            {
+                impactAudioSource = sources[1];
+            }
+            else
+            {
+                impactAudioSource = gameObject.AddComponent<AudioSource>();
+                impactAudioSource.playOnAwake = false;
+                impactAudioSource.spatialBlend = 1.0f;
+                impactAudioSource.minDistance = 2.0f;
+                impactAudioSource.maxDistance = 25.0f;
+            }
+        }
     }
 
     private void Start()
@@ -57,6 +80,12 @@ public class Sword : MonoBehaviour
             bool isBlocked = (enemyCombat != null && enemyCombat.IsBlocking) || (damageable.surfaceType == SurfaceType.Metal);
             BeastOfDarkness beast = transform.root.GetComponent<BeastOfDarkness>();
             bool isBeastActive = (beast != null && beast.IsActive);
+
+            // Determine attack tier from player animator
+            AnimatorStateInfo baseState = (animator != null) ? animator.GetCurrentAnimatorStateInfo(0) : default;
+            bool inAttack3 = baseState.IsName("attack3");
+            bool inAttack2 = baseState.IsName("attack2");
+
             if(isBlocked){
                 PlaySparkFlash(hitPoint, other.transform.position);
                 PlayClashAudio();
@@ -73,18 +102,13 @@ public class Sword : MonoBehaviour
                 // Guts Combat Juice: Micro-hitstop & heavy impact camera shake
                 Animator enemyAnim = other.GetComponentInChildren<Animator>();
                 TriggerHitStop(0.07f, enemyAnim);
-                PlayHitAudio(isBeastActive);
+                PlayHitAudio(isBeastActive, inAttack3 || isBeastActive);
             }
 
             Vector3 pushDirection = (other.transform.position - transform.root.position);
             pushDirection.y = 0f;
             if (pushDirection.sqrMagnitude > 0.001f) pushDirection.Normalize();
             else pushDirection = transform.root.forward;
-
-            // Determine attack tier from player animator
-            AnimatorStateInfo baseState = (animator != null) ? animator.GetCurrentAnimatorStateInfo(0) : default;
-            bool inAttack3 = baseState.IsName("attack3");
-            bool inAttack2 = baseState.IsName("attack2");
 
             HitReactionType reaction = HitReactionType.SwordLight;
             float knockback = 2.0f;
@@ -212,29 +236,41 @@ public class Sword : MonoBehaviour
         }
     }
 
-    public void PlayHitAudio(bool isBeast = false)
+    public void PlayHitAudio(bool isBeast = false, bool isHeavyStrike = false)
     {
-        if (audioSource == null) return;
-        audioSource.pitch = 1.0f;
+        AudioSource source = impactAudioSource != null ? impactAudioSource : audioSource;
+        if (source == null) return;
 
-        if (isBeast && beastHitAudio != null && audioSource.clip != beastHitAudio)
+        // Organic pitch shift to eliminate repetitive drone
+        source.pitch = isBeast ? Random.Range(0.82f, 0.90f) : Random.Range(0.92f, 1.08f);
+        AudioClip baseClip = isBeast ? (beastHitAudio ?? hitAudio) : hitAudio;
+        if (baseClip != null)
         {
-            audioSource.PlayOneShot(beastHitAudio);
+            source.PlayOneShot(baseClip, 0.85f);
         }
-        else if (hitAudio != null && audioSource.clip != hitAudio)
+
+        // Layer visceral flesh cleave
+        if (isHeavyStrike && heavyCleaveClip != null)
         {
-            audioSource.PlayOneShot(hitAudio);
+            source.PlayOneShot(heavyCleaveClip, 1.0f);
+        }
+        else if (fleshCleaveClips != null && fleshCleaveClips.Length > 0)
+        {
+            AudioClip cleaveClip = fleshCleaveClips[Random.Range(0, fleshCleaveClips.Length)];
+            if (cleaveClip != null) source.PlayOneShot(cleaveClip, 0.9f);
         }
     }
 
-    public void PlayClashAudio(){
-        if (audioSource == null)
-            audioSource = GetComponent<AudioSource>() ?? GetComponentInParent<AudioSource>();
+    public void PlayClashAudio()
+    {
+        AudioSource source = impactAudioSource != null ? impactAudioSource : audioSource;
+        if (source == null)
+            source = GetComponent<AudioSource>() ?? GetComponentInParent<AudioSource>();
 
-        if (audioSource != null && clashAudio != null)
+        if (source != null && clashAudio != null)
         {
-            audioSource.pitch = 1.0f;
-            audioSource.PlayOneShot(clashAudio);
+            source.pitch = Random.Range(0.95f, 1.05f);
+            source.PlayOneShot(clashAudio, 1.0f);
         }
     }
 
