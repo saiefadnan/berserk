@@ -82,6 +82,7 @@ public class EnemyController : MonoBehaviour
     private bool walkPointSet;
 
     public bool IsDead => (combat != null) ? combat.IsDead : false;
+    public bool IsThreatActive => !IsDead && (playerInSightRange || playerHeard || (perception != null && perception.DistanceToPlayer <= combatZoneRadius));
     private bool isStaring;
     private bool isCharging;
     private bool playerInSightRange;

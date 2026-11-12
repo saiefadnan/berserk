@@ -39981,6 +39981,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1679261148}
   - component: {fileID: 1679261147}
+  - component: {fileID: 1679261149}
   m_Layer: 0
   m_Name: CombatDirector
   m_TagString: Untagged
@@ -40003,6 +40004,23 @@ MonoBehaviour:
   maxSimultaneousAttackers: 1
   postAttackCooldown: 0.5
   whiffPunishChance: 0.75
+--- !u!114 &1679261149
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1679261146}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 44866f6f6a37c4942904637d46d8d4e9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MusicManager
+  explorationTrack: {fileID: 8300000, guid: a1b2c3d4e5f60718293a4b5c6d7e8f90, type: 3}
+  combatTrack: {fileID: 8300000, guid: b2c3d4e5f60718293a4b5c6d7e8f90a1, type: 3}
+  masterVolume: 0.45
+  crossFadeDuration: 1.5
+  combatExitCooldown: 3.5
 --- !u!4 &1679261148
 Transform:
   m_ObjectHideFlags: 0

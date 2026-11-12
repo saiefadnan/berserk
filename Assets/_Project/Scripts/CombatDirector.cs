@@ -118,6 +118,16 @@ public class CombatDirector : MonoBehaviour{
             Debug.Log($"<color=red><b>[WHIFF PUNISH] {bestCandidate.name} lunging in to punish player whiff!</b></color>");
         }
     }
+    public bool HasActiveThreat(){
+        for (int i = 0; i < registeredCombatants.Count; i++){
+            var enemy = registeredCombatants[i];
+            if (enemy != null && !enemy.IsDead && enemy.IsThreatActive){
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     private void OnDrawGizmos()
     {
