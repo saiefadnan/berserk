@@ -24,6 +24,7 @@ public class Sword : MonoBehaviour
 
 
     private readonly HashSet<IDamageable> targetsHitThisSwing = new HashSet<IDamageable>();
+    private BoxCollider swordCollider;
     private bool cool = false;
     private bool hitAnyTargetThisSwing = false;
     private Animator animator;
@@ -54,6 +55,7 @@ public class Sword : MonoBehaviour
                 impactAudioSource.maxDistance = 25.0f;
             }
         }
+        swordCollider = GetComponent<BoxCollider>();
     }
 
     private void Start()
@@ -78,7 +80,7 @@ public class Sword : MonoBehaviour
             targetsHitThisSwing.Add(damageable);
             hitAnyTargetThisSwing = true;
             // No ContactPoint available with triggers, use transform instead
-            Vector3 hitPoint = other.ClosestPoint(transform.position);
+            Vector3 hitPoint = other.ClosestPoint(swordCollider.bounds.center);
             Vector3 hitNormal = (hitPoint - transform.position).normalized;
             EnemyCombat enemyCombat = other.GetComponent<EnemyCombat>() ?? other.GetComponentInParent<EnemyCombat>();
             bool isBlocked = (enemyCombat != null && enemyCombat.IsBlocking) || (damageable.surfaceType == SurfaceType.Metal);
@@ -102,7 +104,7 @@ public class Sword : MonoBehaviour
             }
             else if (damageable.surfaceType == SurfaceType.Flesh)
             {
-                PlayBloodSplatter(hitPoint, hitNormal, other.transform);
+                PlayBloodSplatter(hitPoint, hitNormal);
                 // Guts Combat Juice: Micro-hitstop & heavy impact camera shake
                 Animator enemyAnim = other.GetComponentInParent<Animator>();
                 TriggerHitStop(0.07f, enemyAnim);
@@ -337,12 +339,12 @@ public class Sword : MonoBehaviour
         }
     }
 
-    public void PlayBloodSplatter(Vector3 hitPoint, Vector3 normal, Transform parent = null)
+    public void PlayBloodSplatter(Vector3 hitPoint, Vector3 normal)
     {
         if (bloodEffectPrefab != null)
         {
             Quaternion rot = (normal.sqrMagnitude > 0.001f) ? Quaternion.LookRotation(normal) : Quaternion.identity;
-            GameObject effect = Instantiate(bloodEffectPrefab, hitPoint, rot, parent);
+            GameObject effect = Instantiate(bloodEffectPrefab, hitPoint, rot);
             Destroy(effect, 3f);
         }
     }
