@@ -266,7 +266,7 @@ public class EnemyCombat : MonoBehaviour {
         yield return new WaitForSeconds(5.2f);
         if (!isDead && !isFakingDeath){
             if(agent!=null && agent.enabled){
-                agent.isStopped = true;
+                agent.isStopped = false;
                 isKnockedDown = false;
             }
         }

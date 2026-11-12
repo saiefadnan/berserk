@@ -26,6 +26,7 @@ public class EquipWeapon : MonoBehaviour
 
     [Header("Two-Handed IK")]
     [SerializeField] private float ikSmoothSpeed = 12f;
+    [SerializeField] private Vector3 leftHandGripOffset = new Vector3(0.00096f, 0.00013f, 0.00141f);
     private float currentIKWeight = 0f;
     private Transform leftHandGripPoint;
     private Animator animator;
@@ -67,7 +68,7 @@ public class EquipWeapon : MonoBehaviour
                 gripGo.transform.SetParent(currEquipped.transform, false);
                 leftHandGripPoint = gripGo.transform;
             }
-            leftHandGripPoint.localPosition = new Vector3(0.00089f, -0.00085f, 0.00145f);
+            leftHandGripPoint.localPosition = leftHandGripOffset;
             leftHandGripPoint.localRotation = Quaternion.identity;
         }
     }

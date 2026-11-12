@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using System.Collections.Generic;
 
 public class Sword : MonoBehaviour
 {
@@ -22,6 +23,7 @@ public class Sword : MonoBehaviour
     [SerializeField] private AudioClip heavyCleaveClip;
 
 
+    private readonly HashSet<IDamageable> targetsHitThisSwing = new HashSet<IDamageable>();
     private bool cool = false;
     private bool hitAnyTargetThisSwing = false;
     private Animator animator;
@@ -72,6 +74,8 @@ public class Sword : MonoBehaviour
         {
             IDamageable damageable = other.GetComponent<IDamageable>() ?? other.GetComponentInParent<IDamageable>();
             if (damageable == null || damageable.victim == transform.root.gameObject) return;
+            if(targetsHitThisSwing.Contains(damageable)) return;
+            targetsHitThisSwing.Add(damageable);
             hitAnyTargetThisSwing = true;
             // No ContactPoint available with triggers, use transform instead
             Vector3 hitPoint = other.ClosestPoint(transform.position);
@@ -89,7 +93,7 @@ public class Sword : MonoBehaviour
             if(isBlocked){
                 PlaySparkFlash(hitPoint, other.transform.position);
                 PlayClashAudio();
-                Animator enemyAnim = other.GetComponentInChildren<Animator>();
+                Animator enemyAnim = other.GetComponentInParent<Animator>();
                 TriggerHitStop(0.09f, enemyAnim);
                 if (CameraShake.Instance != null)
                 {
@@ -100,7 +104,7 @@ public class Sword : MonoBehaviour
             {
                 PlayBloodSplatter(hitPoint, hitNormal, other.transform);
                 // Guts Combat Juice: Micro-hitstop & heavy impact camera shake
-                Animator enemyAnim = other.GetComponentInChildren<Animator>();
+                Animator enemyAnim = other.GetComponentInParent<Animator>();
                 TriggerHitStop(0.07f, enemyAnim);
                 PlayHitAudio(isBeastActive, inAttack3 || isBeastActive);
             }
@@ -165,22 +169,30 @@ public class Sword : MonoBehaviour
         }
     }
 
+    private Animator currentPausedEnemyAnimator;
+
     public void TriggerHitStop(float duration, Animator enemyAnimator)
     {
-        if (hitStopCoroutine != null) StopCoroutine(hitStopCoroutine);
+        if (hitStopCoroutine != null)
+        {
+            StopCoroutine(hitStopCoroutine);
+            if (currentPausedEnemyAnimator != null) currentPausedEnemyAnimator.speed = 1.0f;
+        }
         hitStopCoroutine = StartCoroutine(DoHitStop(duration, enemyAnimator));
     }
 
     private IEnumerator DoHitStop(float duration, Animator enemyAnimator)
     {
+        currentPausedEnemyAnimator = enemyAnimator;
         if (animator != null) animator.speed = 0.0f;
         if (enemyAnimator != null) enemyAnimator.speed = 0.0f;
         yield return new WaitForSecondsRealtime(duration);
         BeastOfDarkness beast = transform.root.GetComponent<BeastOfDarkness>();
         float resumeSpeed = (beast != null && beast.IsActive) ?
             beast.AttackSpeedMultiplier : 1.0f;
-        if (animator != null) animator.speed = resumeSpeed ;
+        if (animator != null) animator.speed = resumeSpeed;
         if (enemyAnimator != null) enemyAnimator.speed = 1.0f;
+        currentPausedEnemyAnimator = null;
         hitStopCoroutine = null;
     }
 
@@ -277,6 +289,7 @@ public class Sword : MonoBehaviour
     public void EnableDamage()
     {
         cool = true;
+        targetsHitThisSwing.Clear();
         hitAnyTargetThisSwing = false;
         AnimateSlash();
         if (swordTrail != null) {
