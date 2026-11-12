@@ -125,9 +125,9 @@ flowchart TD
   - **Active Swing Frame Windows**: Accurate hitbox enable/disable windows with hit-once-per-swing tracking.
   - **Player Death Flow**: Slow-motion cinematic impact on lethal blow, death ragdoll/animation, and dark fantasy death screen.
   - **Checkpoint & Respawn Loop**: Respawn at safe checkpoint, restore player stats, and reset active combat encounter state.
-- [ ] **5.3 Audio Architecture**
-  - Adaptive soundtrack switching between exploration ambient and intense combat themes.
-  - Layered sword swings (light swoosh vs deep sonic whoosh for heavy swings).
+- [x] **5.3 Audio Architecture** (:white_check_mark: COMPLETED)
+  - [x] Adaptive soundtrack switching between exploration ambient and intense combat themes.
+  - [x] Layered sword swings (light swoosh vs deep sonic whoosh for heavy swings).
   - [x] Visceral flesh cleave, bone crush, and dynamic pitch impact audio design.
 
 ---
@@ -135,10 +135,10 @@ flowchart TD
 ### Phase 6: Atmosphere, Environment & Optimization
 > **Goal:** Establish a haunting dark fantasy visual identity and rock-solid performance.
 
-- [ ] **6.1 URP Lighting & Post-Processing**
-  - Custom color grading (dark, gritty, high contrast).
-  - Volumetric fog, bloom, and ambient occlusion.
-  - Dynamic weather / atmospheric wind affecting Guts' cape cloth simulation.
+- [x] **6.1 Lighting & Post-Processing** (:white_check_mark: COMPLETED)
+  - [x] Custom dark fantasy color grading (ACES tonemapping, crushed blacks contrast, cold grim temperature, muted blood-and-iron saturation).
+  - [x] Exponential squared slate fog (`#1E232B`, density 0.012), HDR bloom for sparks & eye ribbons, and multi-scale ambient occlusion.
+  - [x] Preserved frozen Cape cloth physics and coefficients untouched.
 - [ ] **6.2 Performance & Optimization**
   - Mesh and animation LODs.
   - Particle system budget and draw call optimization.
