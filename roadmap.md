@@ -25,6 +25,7 @@ flowchart TD
     P3 --> P4["Phase 4: Signature Guts Mechanics"]
     P4 --> P5["Phase 5: Core Loop, UI & Audio"]
     P5 --> P6["Phase 6: Atmosphere & Polish"]
+    P6 --> P7["Phase 7: Advanced Combat & Execution"]
 ```
 
 ---
@@ -119,7 +120,7 @@ flowchart TD
   - Health bar, Stamina bar, and Berserk / Rage meter with ghost-fill lag and status prompts.
   - Cannon ammunition / cooldown display with radial reload wipe widget.
   - Sekiro-style lock-on targeting system with camera tracking, combat strafing, and Deathblow execution state.
-- [ ] **5.2 Progression & Precision Damage Loop**
+- [x] **5.2 Progression & Precision Damage Loop** (:white_check_mark: COMPLETED)
   - **Physical Enemy Weapon Hitboxes**: Eliminate phantom sphere damage; player only takes damage when the enemy's physical blade collider physically cuts through Guts' body collider.
   - **Active Swing Frame Windows**: Accurate hitbox enable/disable windows with hit-once-per-swing tracking.
   - **Player Death Flow**: Slow-motion cinematic impact on lethal blow, death ragdoll/animation, and dark fantasy death screen.
@@ -127,7 +128,7 @@ flowchart TD
 - [ ] **5.3 Audio Architecture**
   - Adaptive soundtrack switching between exploration ambient and intense combat themes.
   - Layered sword swings (light swoosh vs deep sonic whoosh for heavy swings).
-  - Visceral flesh cleave and bone crush audio design.
+  - [x] Visceral flesh cleave, bone crush, and dynamic pitch impact audio design.
 
 ---
 
@@ -142,6 +143,23 @@ flowchart TD
   - Mesh and animation LODs.
   - Particle system budget and draw call optimization.
   - Target: Solid 60+ FPS at 1080p/1440p.
+
+---
+
+### Phase 7: Advanced Combat & Tactical Expansion (Post-Launch Polish)
+> **Goal:** Push combat depth and dueling nuance to competitive Souls / Sekiro standards.
+
+- [ ] **7.1 Perfect Parry & Riposte Stagger**
+  - Precise timed parry window (0.2s) when raising guard right before blade impact.
+  - Paladin weapon deflection recoil animation, heavy spark shockwave, and poise damage.
+  - Critical riposte / counter-slash window granting immediate high-damage retaliation.
+- [ ] **7.2 Paladin Combat Combo Escalation & Attack Glint**
+  - Visual telegraph glint on enemy blade right before the swing starts to assist parry timing.
+  - 2-hit chained combo follow-up (overhead into horizontal sweep) if Guts stays in close quarters.
+- [ ] **7.3 Cinematic Execution & Deathblow Hookup**
+  - Full hookup of `ExecutionHandler.cs` and `ExecutionTarget.cs`.
+  - Crimson deathblow reticle trigger on broken posture / critical HP threshold.
+  - Cinematic interact prompt (`E`) triggering camera zoom, time dilation, and guaranteed lethal dismemberment.
 
 ---
 
