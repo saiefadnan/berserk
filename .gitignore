@@ -80,6 +80,7 @@ desktop.ini
 
 # Recovery & local screenshots
 /[Aa]ssets/_Recovery/
+/[Aa]ssets/_Recovery.meta
 Screenshot*.png
 
 # Staging, archives & conversion tools

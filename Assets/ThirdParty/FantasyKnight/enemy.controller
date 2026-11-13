@@ -332,7 +332,7 @@ AnimatorStateMachine:
     m_Position: {x: 250, y: -200, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -5315428448125896983}
-    m_Position: {x: 590, y: -190, z: 0}
+    m_Position: {x: 590, y: -160, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -5233086019174708849}
     m_Position: {x: -60, y: -150, z: 0}
@@ -347,7 +347,7 @@ AnimatorStateMachine:
     m_Position: {x: 880, y: -310, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -2330551795897732535}
-    m_Position: {x: 750, y: 70, z: 0}
+    m_Position: {x: 790, y: 150, z: 0}
   m_ChildStateMachines: []
   m_AnyStateTransitions:
   - {fileID: -6776313722914433964}
@@ -566,7 +566,7 @@ AnimatorState:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: knock_down
+  m_Name: vulnerable
   m_Speed: 2
   m_CycleOffset: 0
   m_Transitions:
@@ -580,7 +580,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: 41c14a8efa7ef134cb3d06ab5e66db9b, type: 2}
+  m_Motion: {fileID: 7400000, guid: 52053e81b7d284f4a8628d5b21e86a97, type: 2}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 

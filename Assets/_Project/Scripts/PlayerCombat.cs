@@ -82,6 +82,17 @@ public class PlayerCombat : MonoBehaviour{
         stamina = GetComponent<Stamina>();
     }
 
+    private void Start()
+    {
+        if (animator != null)
+        {
+            animator.ResetTrigger(Attack1Param);
+            animator.ResetTrigger(Attack2Param);
+            animator.ResetTrigger(Attack3Param);
+            animator.ResetTrigger(Animator.StringToHash("execute"));
+        }
+    }
+
     private void OnEnable()
     {
         if (healthComponent != null)

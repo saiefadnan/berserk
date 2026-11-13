@@ -178,7 +178,7 @@ public class EnemyCombat : MonoBehaviour {
             if (data.reactionType == HitReactionType.SwordKnockdown){
                 isBlocking = false;
                 if (blockCoroutine != null) StopCoroutine(blockCoroutine);
-                TriggerKnockdown(data);
+                TriggerDefenseless(data);
                 return;
             }
 
@@ -200,7 +200,7 @@ public class EnemyCombat : MonoBehaviour {
             rb.angularVelocity = Vector3.zero;
         }
         if(data.reactionType == HitReactionType.SwordKnockdown){
-            TriggerKnockdown(data);
+           TriggerDefenseless(data);
         }else{
             animator.SetTrigger("hit_react");
             if (agent != null && agent.enabled){
@@ -210,11 +210,11 @@ public class EnemyCombat : MonoBehaviour {
         }
     }
 
-    private void TriggerKnockdown(DamageData data){
+    private void TriggerDefenseless(DamageData data){
         if(knockdownRoutine != null){
             StopCoroutine(knockdownRoutine);
         }
-        knockdownRoutine = StartCoroutine(KnockdownRoutine(data));
+        knockdownRoutine = StartCoroutine(Defenseless(data));
         if (CombatDirector.Instance != null){
             CombatDirector.Instance.ReleaseAttackToken(this);
         }
@@ -240,7 +240,7 @@ public class EnemyCombat : MonoBehaviour {
         guardCounterRoutine = null;
     }
 
-    private IEnumerator KnockdownRoutine(DamageData data){
+    private IEnumerator Defenseless(DamageData data){
         isKnockedDown = true;
         if(agent!=null && agent.enabled){
             agent.isStopped = true;
