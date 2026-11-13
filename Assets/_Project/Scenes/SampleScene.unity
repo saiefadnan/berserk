@@ -53727,15 +53727,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1273276538482450129, guid: 8ce21e5215bc6d74eabac4873f810a05, type: 3}
       propertyPath: m_Data.m_Offset.x
-      value: -140
+      value: -120
       objectReference: {fileID: 0}
     - target: {fileID: 1273276538482450129, guid: 8ce21e5215bc6d74eabac4873f810a05, type: 3}
       propertyPath: m_Data.m_Offset.y
-      value: 25
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 1273276538482450129, guid: 8ce21e5215bc6d74eabac4873f810a05, type: 3}
       propertyPath: m_Data.m_Offset.z
-      value: -120
+      value: -100
       objectReference: {fileID: 0}
     - target: {fileID: 1273276538482450129, guid: 8ce21e5215bc6d74eabac4873f810a05, type: 3}
       propertyPath: m_Data.m_ConstrainedAxes.x

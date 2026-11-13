@@ -3,6 +3,7 @@ using UnityEngine;
 public class PlayerCombat : MonoBehaviour{
     [Header("Dodge / Roll Settings")]
     [SerializeField] private KeyCode dodgeKey = KeyCode.LeftAlt;
+    [SerializeField] private KeyCode guardKey = KeyCode.Space;
     [SerializeField] private float dodgeSpeed = 12f;
     [SerializeField] private float dodgeDuration = 0.45f;
     [SerializeField] private float dodgeCooldown = 0.5f;
@@ -21,6 +22,12 @@ public class PlayerCombat : MonoBehaviour{
     [SerializeField] private AudioClip clashAudio;
     [SerializeField] private GameObject sparkPrefab;
     [SerializeField] private AudioSource combatAudioSource;
+
+    [Header("Parry & Riposte Settings")]
+    [SerializeField] private float parryWindowDuration = 0.22f;
+    [SerializeField] private float riposteDamageMultiplier = 1.75f;
+    private float parryTimer = 0f;
+    public bool IsParryActive => isGuarding && parryTimer > 0f;
 
     // Component References
     private Animator animator;
@@ -156,7 +163,7 @@ public class PlayerCombat : MonoBehaviour{
 
     private void HandleShoot()
     {
-        isShooting = Input.GetMouseButton(1) && !isEquipped;
+        isShooting = Input.GetMouseButton(1) && !IsEquipped;
         animator.SetBool(ShootParam, isShooting);
     }
 
@@ -173,18 +180,35 @@ public class PlayerCombat : MonoBehaviour{
     private void HandleDamaged(DamageData data)
     {
         if (isGuarding)
-        {
-            if (stamina != null) stamina.Consume(12f);
-            animator.SetTrigger(GuardHitParam);
-            Vector3 sparkPoint = (data.hitPoint != Vector3.zero) ? data.hitPoint : transform.position + transform.forward + Vector3.up * 1.2f;
+        {   if (IsParryActive){
+                if (data.attacker != null){
+                    ExecutionTarget target = data.attacker.GetComponent<ExecutionTarget>() ?? data.attacker.GetComponentInParent<ExecutionTarget>();
+                    if (target != null){
+                        target.TriggerStagger(2.5f);
+                    }
+                    if (combatAudioSource != null && clashAudio != null){
+                        combatAudioSource.pitch = 1.25f;
+                        combatAudioSource.PlayOneShot(clashAudio);
+                    }
+                    if (CameraShake.Instance != null) CameraShake.Instance.Shake(0.24f, 0.35f);
+                    Debug.Log("<color=cyan><b>[PERFECT PARRY] Deflected enemy blade!</b></color>");
+                }
+            }else{
+                if (stamina != null) stamina.Consume(12f);
+                animator.SetTrigger(GuardHitParam);
+                if (combatAudioSource != null && clashAudio != null){
+                    combatAudioSource.pitch = 1.0f;
+                    combatAudioSource.PlayOneShot(clashAudio);
+                }
+                if (CameraShake.Instance != null) CameraShake.Instance.Shake(0.16f, 0.22f);
+                Debug.Log("<color=yellow><b>[CLASH] Dragonslayer Parried Blow!</b></color>");
+            }
             if (sparkPrefab != null)
             {
+                Vector3 sparkPoint = (data.hitPoint != Vector3.zero) ? data.hitPoint : transform.position + transform.forward + Vector3.up * 1.2f;
                 GameObject spark = Instantiate(sparkPrefab, sparkPoint, Quaternion.identity);
                 Destroy(spark, 1.5f);
             }
-            if (combatAudioSource != null && clashAudio != null) combatAudioSource.PlayOneShot(clashAudio);
-            if (CameraShake.Instance != null) CameraShake.Instance.Shake(0.16f, 0.22f);
-            Debug.Log("<color=yellow><b>[CLASH] Dragonslayer Parried Blow!</b></color>");
         }
     }
 
@@ -254,11 +278,16 @@ public class PlayerCombat : MonoBehaviour{
 
     private void HandleGuard()
     {
-        bool rightClick = Input.GetMouseButton(1);
-        isGuarding = IsEquipped && rightClick && !isDodging && !IsAttacking;
+        if(IsEquipped && Input.GetKeyDown(guardKey) && !isDodging && !IsAttacking){
+            parryTimer = parryWindowDuration;
+        }
+        bool spaceHold = Input.GetKey(guardKey);
+        isGuarding = IsEquipped && spaceHold && !isDodging && !IsAttacking;
+
+        if (parryTimer > 0f) parryTimer -= Time.deltaTime;
         if (healthComponent != null)
         {
-            healthComponent.damageReductionPercent = isGuarding ? 0.85f : 0f;
+            healthComponent.damageReductionPercent = IsParryActive ? 1.0f : (isGuarding ? 0.85f : 0f);
         }
         animator.SetBool(IsGuardingParam, isGuarding);
         if (equipWeaponComponent != null)

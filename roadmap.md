@@ -149,10 +149,11 @@ flowchart TD
 ### Phase 7: Advanced Combat & Tactical Expansion (Post-Launch Polish)
 > **Goal:** Push combat depth and dueling nuance to competitive Souls / Sekiro standards.
 
-- [ ] **7.1 Perfect Parry & Riposte Stagger**
-  - Precise timed parry window (0.2s) when raising guard right before blade impact.
-  - Paladin weapon deflection recoil animation, heavy spark shockwave, and poise damage.
-  - Critical riposte / counter-slash window granting immediate high-damage retaliation.
+- [x] **7.1 Perfect Parry & Riposte Stagger** (:white_check_mark: COMPLETED)
+  - Precise timed parry window (0.22s) on Space initial press down right before blade impact.
+  - 100% damage nullification and 0 stamina cost on successful deflection.
+  - High-pitch metallic clash feedback, heavy spark explosion, and camera micro-shudder.
+  - Enemy stance break into Vulnerable / Staggered state (`ExecutionTarget.TriggerStagger`) opening the target for critical punish or execution.
 - [ ] **7.2 Paladin Combat Combo Escalation & Attack Glint**
   - Visual telegraph glint on enemy blade right before the swing starts to assist parry timing.
   - 2-hit chained combo follow-up (overhead into horizontal sweep) if Guts stays in close quarters.
